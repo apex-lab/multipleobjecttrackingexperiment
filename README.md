@@ -12,7 +12,10 @@ Added Functionalities/Important comments/Edits:
 
 5) I have made the code shorter by removing the functions for guide trials and practice trials. It was basically the same, very long bit of code 3 times in a row. So now it all falls under the "trials" function. 
 
-6) All of these features currently work on my device. But if you run into any trouble at all, please reach out to me at dtfalk@uchicago.edu or send me a text at 413-884-2553. I am very happy to help get the program running or walk anyone through how the code works. 
+6) In general, I have tried to edit the existing code and write all of the features that I added in such a way that it will be easy to change/play around with so that we can find the ideal setup for the purposes of the experiment. Most things are easy to change. 
+
+7) All of these features currently work on my device. But if you run into any trouble at all, please reach out to me at dtfalk@uchicago.edu or send me a text at 413-884-2553. I am very happy to help get the program running or walk anyone through how the code works.
+
 
 # multiple-object-tracking-paradigm
 

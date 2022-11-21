@@ -2,7 +2,7 @@
 # BUGS/things to edit/things to consider: 
 # 1) add additional message screens (make level/stage premise more clear?).
 # 2) code cleanliness (test lines, commenting format, redundencies, difficult to understand
-#    variables, ...)
+#    variables,etc ...)
 # 3) perhaps edit generate_list() so that we set a minimum velocity s.t. |min_vel| > 0
 #  General Note: want to be addictive (think flow), not too boring and not too difficult
 # 4) adding music to keeping people engaged (come up with ideas from playing alot, wait to implement) 

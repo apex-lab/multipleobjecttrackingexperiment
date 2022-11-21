@@ -2,7 +2,7 @@ import math
 from random import randint, choice
 import time
 
-# == Path For Storing Trial Results ==
+# == Path For Storing Trial Results. ==
 save_path = 'C:\\Users\\Administrator\\psychexperiment\\multiple-object-tracking-paradigm\\results\\'
 
 """

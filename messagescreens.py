@@ -8,7 +8,7 @@ os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x,y)
 win = pg.display.set_mode((win_width, win_height), pg.FULLSCREEN)
 pg.display.set_caption(title)
 
-# == Define colors ==
+# == Define colors. ==
 background_col = GREY
 hover_col = DARKSLATEGREY
 click_col = GREENYELLOW
