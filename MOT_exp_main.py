@@ -13,12 +13,15 @@
 # import pygame as pg
 import sys
 import random
+import os
+import scipy.stats as stats
+import statistics
 from messagescreens import  *
 from psychopy.gui import DlgFromDict
 
 # == Game Structure Variables ==
 # == Attributes and relations between those attributes ==
-attributes = ["targs", "dists", "speed"]
+attributes = ["targs", "speed", "dists"]
 att_max = [3,3] 
 # If you edit att_max then I reccomend keeping the first 
 # entry as an odd number. The below code is some added functionality
@@ -28,7 +31,7 @@ att_max = [3,3]
 # that I reccomend using odd numbers. It still works with even numbers
 # and will not break anything if you use an even one, just a reccomendation
 scale = 1
-dist_range = att_max[0] // 2
+dist_range = att_max[1] // 2
 starting_targs = 2
 
 # == how far player progresses or regresses based on performance ==
@@ -36,7 +39,7 @@ success = 1
 failure = -3
 
 # == Trial variables ==
-n_real = 25
+n_real = 50
 n_prac = 2
 n_guide = 1
 
@@ -59,9 +62,9 @@ class MOTobj:
         # -- Velocity initialization (NOT 0)
         self.dx = 0
         self.dy = 0
-        while (self.dx == 0 or self.dy == 0):
-            self.dx = (game["speed"] + 1) * random.uniform(-1, 1)
-            self.dy = (game["speed"] + 1) * random.uniform(-1, 1)
+        while (abs(self.dx) <= 0.1 or abs(self.dy) <= 0.1):
+            self.dx = random.choice([-1,1]) * ((game["speed"])  + random.uniform(0, 1))
+            self.dy = random.choice([-1,1]) * ((game["speed"]) + random.uniform(0, 1))
 
         # -- Set the circle object neutral state color
         self.color = default_color
@@ -75,6 +78,7 @@ class MOTobj:
         self.state = ""
         self.isClicked = False
         self.isSelected = False
+    
 
     def change_color(self, color):
         self.color = color
@@ -159,11 +163,14 @@ class MOTobj:
         self.y = choice([n for n in range(int(boundary["up"]), int(boundary["down"]))
                          if n not in range(y - self.radius, y + self.radius)])
 
-    def velocity_change(self,game):
-        self.dx = (game["speed"] + 1)* random.uniform(-1, 1)
-        self.dy = (game["speed"] + 1)* random.uniform(-1, 1)
 
-# == returns product over elements up to entry n == 
+def velocity_change(self, game):
+        self.dx = random.choice([-1,1]) * ((game["speed"])  + random.uniform(0, 1))
+        self.dy = random.choice([-1,1]) * ((game["speed"]) + random.uniform(0, 1))
+        while (abs(self.dx) <= 0.1 or abs(self.dy) <= 0.1):
+            self.dx = random.choice([-1, 1]) * ((game["speed"])  + random.uniform(0, 1))
+            self.dy = random.choice([-1,1]) * ((game["speed"]) + random.uniform(0, 1))
+# == returns product over elements up to and including entry n == 
 def product(list, n):
     prod = 1
     for i in range(n):
@@ -211,34 +218,31 @@ def generate_list(game, color):
         distractor_list.append(d)
     return distractor_list, target_list
 
+
 # == Helper Function for Delaying Game by t seconds ==
 def delay(t):
     """function to stop all processes for a time"""
     pg.time.delay((t*1000))  # multiply by a thousand because the delay function takes milliseconds
 
 # == Function for Recording User Performance ==
-def record_response(response_time, response_score, game, time_out_state, log):
+def record_response(d_prime, response_time, targs_identified, game, time_out_state, log):
     # record the responses
-    header_list = [response_time, response_score, game["targs"], game["speed"], time_out_state]
+    header_list = [d_prime, response_time, targs_identified, game["targs"], game["stage"], time_out_state]
     # convert to string
     header_str = map(str, header_list)
     # convert to a single line, separated by commas
-    header_line = ','.join(header_str)
-    header_line += '\n'
+    if d_prime == 'NA':    
+        header_line = ','.join(header_str)
+        header_line += '\n'
+    else:
+        header_line = 'd\' = ' + str(d_prime)
     log.write(header_line)
 
 # == plays proper welcome messages based on gametype ==
 def welcome_messages(game, gametype):
     num_targs = game["targs"]
-    if gametype == 'real':    
-        win.fill(background_col)
-        msg_to_screen_centered(stage_txt(game), BLACK, large_font)
-        pg.display.flip()
-        delay(feedback_time + 2)
     
     if gametype == 'guide':
-        wait_key()
-        pg.display.flip()
         wait_key()
         pg.display.flip()
         guide_screen("start", [], [], num_targs)
@@ -274,11 +278,33 @@ def take_a_break(game,gametype):
         return True
     return False
 
+# == updates the score given current score and consecutive correct trials
+def update_score(score, consecutive):
+    return score + consecutive
+
+def d_prime(hit_rate, FA_rate):
+    # in this we use 1 for the thing we vary around for the hits
+    # in this we use 0.5 for the thing we vary around for the false alarms
+    # for both mean and standard deviation (z score = value - mean / std)
+    # higher d' means better signal recognition
+    std_hit = statistics.stdev(hit_rate, 1)
+    std_fa = statistics.stdev(FA_rate, 0.5)
+    if std_hit == 0:
+        hit = 0
+    else:    
+        hit = (statistics.mean(hit_rate) - 1) / std_hit # calculates z score around mean of 1 (user knows what they are doing p = 1)
+    if std_fa == 0:
+        fa = 0
+    else:    
+        fa = (statistics.mean(FA_rate) - 0.5) / std_fa # calculates z score around mean of 1 (user is guessing p = 0.5)
+    return hit - fa
+
+
 # == Defines an object to flash in corner of screen for our photosensor ==
 flash_square = MOTobj(update_game(0), WHITE) 
 
 # == Runs Real Trials (same as practice but user performance is saved) ==
-def trials(game, CRT, recorder, gametype, tot_trials):
+def trials(game, CRT, recorder, gametype, tot_trials, hit_rate, FA_rate):
 
     # == Messages to user based on gametype ==
     welcome_messages(game, gametype)
@@ -288,6 +314,7 @@ def trials(game, CRT, recorder, gametype, tot_trials):
     list_m = list_d + list_t
     count = CRT
     reset = submitted = insufficient_selections = timeup = False
+    score = consecutive = 0 # initializes score and consecutive correct trials
     t0 = pg.time.get_ticks()
 
     # == Controls the "game" part of the game ==
@@ -308,8 +335,11 @@ def trials(game, CRT, recorder, gametype, tot_trials):
                 sys.exit()
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                    sys.exit()
+                    if gametype == 'guide' or gametype == 'practice':
+                        pg.quit()
+                        sys.exit()
+                    else:
+                        return(game)
                 if event.key == pg.K_SPACE:
                     if not reset:
                         for target in list_t:
@@ -380,8 +410,10 @@ def trials(game, CRT, recorder, gametype, tot_trials):
                
                 # == Records info for the trial ==
                 if gametype == 'real':
+                    hit_rate.append(len(selected_targ) / game["targs"]) # adding values to hit rate 
+                    FA_rate.append((game["targs"] - len(selected_targ)) / game["targs"]) # adding values to false alarm rate
                     t_sub = ((t_keypress - t0)/1000) - animation_time
-                    record_response(t_sub, len(selected_targ), game, False, recorder)
+                    record_response("NA", t_sub, len(selected_targ), game, False, recorder)
                 
                 # == message screen stating performance on that trial ==
                 win.fill(background_col)
@@ -389,23 +421,28 @@ def trials(game, CRT, recorder, gametype, tot_trials):
                 pg.display.flip()
                 delay(feedback_time)
 
-                # == Based on that performance, we update the stage ==
+                # == Based on that performance, we update the stage and score ==
                 if len(selected_targ) == len(selected_list):
                     game["stage"] += success
+                    consecutive += 1
+                    score = update_score(score, consecutive)
                 else:
                     game["stage"] += failure
+                    consecutive = 0
                     if game["stage"] < 0:
                         game["stage"] = 0
+                if gametype == 'real': 
+                    score_screen(score) # display score
 
                 # == Check if the user has earned a break ==
-                if take_a_break(game, gametype):
-                    user_break_screen(game)
-                    delay(feedback_time + 2)
+                #if take_a_break(game, gametype):
+                #    user_break_screen(game)
+                #    delay(feedback_time + 2)
                 reset = True
 
             if timeup: # -- if the user runs out of time
                 if gametype == 'real':
-                    record_response("timed out", "timed out", game, True, recorder)
+                    record_response("NA", "timed out", "NA", game, True, recorder)
                 message_screen("timeup", num_targs)
                 delay(feedback_time)
                 count -= 1
@@ -414,14 +451,19 @@ def trials(game, CRT, recorder, gametype, tot_trials):
             if reset: # -- prepare for the next trial
                 game = update_game(game["stage"])
                 list_d, list_t = generate_list(game, WHITE)
+                #for i in range(len(list_d)):
+                #    velocity_change(list_d[i], game)
+                #for i in range(len(list_t)):
+                #    velocity_change(list_t[i], game)
                 list_m = list_d + list_t
                 count += 1
                 submitted = timeup = insufficient_selections= reset = False
                 t0 = pg.time.get_ticks()
 
-        else: # -- end of experiment/practice/guide
+        else: # -- end oF experiment/practice/guide
             win.fill(background_col)
             end_messages(game, gametype, recorder)
+            return (game)
             break
 
 
@@ -430,6 +472,8 @@ def main():
 
     # == Variables to count how many trials have been completed ==
     completed_real_trials = completed_practice_trials = completed_guide_trials = 0
+    hit_rate = [] # hit rate for d' calculation
+    FA_rate = [] # false alarm rate for d' calculation
 
     # == starting stages and levels ==
     game_guide = update_game(0)
@@ -445,7 +489,7 @@ def main():
         mot_log = date_string + ' pcpnt_' + session_info['Participant'] + '_obsvr_' + session_info['Observer']
         filename = save_path + mot_log +'.csv'
         log = open(filename, 'w')
-        header = ["response_time", "response_score", "stage", "level" ,"timed_out"]
+        header = ["d_prime", "response_time", "targets_identified", "total_targets", "stage","timed_out"]
         delim = ",".join(header)
         delim += "\n"
         log.write(delim)
@@ -455,13 +499,15 @@ def main():
         pg.display.flip()
 
         # == Start guide ==
-        trials(game_guide, completed_guide_trials, log, 'guide', n_guide)
+        trials(game_guide, completed_guide_trials, log, 'guide', n_guide, hit_rate, FA_rate)
 
         # == Start practice ==
-        trials(game_prac, completed_practice_trials, log, 'practice', n_prac)
+        trials(game_prac, completed_practice_trials, log, 'practice', n_prac, hit_rate, FA_rate)
 
         # == Start real trials, recording responses ==
-        trials(game_real, completed_real_trials, log, 'real', n_real)
+        game = trials(game_real, completed_real_trials, log, 'real', n_real, hit_rate, FA_rate)
+        dp = d_prime(hit_rate, FA_rate)
+        record_response(dp, "NA","NA", game, False, log)
         pg.quit()
         sys.exit()
 

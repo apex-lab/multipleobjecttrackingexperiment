@@ -177,3 +177,9 @@ def user_break_screen(game):
     win.fill(background_col)
     msg_to_screen_centered(stage_txt(game), BLACK, large_font)
     pg.display.flip()
+
+def score_screen(score):
+    win.fill(background_col)
+    msg_to_screen_centered("Score: " + str(score), BLACK, large_font)
+    pg.display.flip()
+    pg.time.delay(2 * 1000)
