@@ -23,18 +23,25 @@ def wait_key():
                 return
 
 
-def flash_targets(dlist, tlist,flash_square):
+def flash_targets(dlist, tlist, flash_square, flash):
     """function to flash targets"""
     fixation_cross()
-    for d in dlist:
+    flash_square.color = default_color
+    if flash == True:
         for t in tlist:
-            flash_square.draw_square()
-            flash_square.flash_color(True)
-            d.draw_circle(win)
-            t.flash_color(False)
+            t.color == default_color
+            t.color = GREEN
             t.draw_circle(win)
-            flash_square.flash_color(True)
+            flash = False
+    else:
+        for t in tlist:
+            t.color = default_color
+            t.draw_circle(win)
+    for d in dlist:
+        d.draw_circle(win)
     pg.display.update()
+    return flash
+
 
 
 def animate(dlist, tlist, mlist):
@@ -116,10 +123,10 @@ def multi_line_message(text, textsize, pos=((win_width-(win_width/10)), win_heig
     pg.display.flip()
 
 
-def message_screen(message, num_targ, display=win):
+def message_screen(message, num_targ, total, display=win):
     if message == "start":
         display.fill(background_col)
-        multi_line_message(start_text(num_targ), med_font, ((win_width - (win_width / 10)), 120))
+        multi_line_message(start_text(num_targ, total), med_font, ((win_width - (win_width / 10)), 120))
     if message == "not_selected_enough":
         msg_to_screen_centered("Select " + str(num_targ) + " circles!", BLACK, med_font)
     if message == "timeup":
@@ -135,11 +142,16 @@ def message_screen(message, num_targ, display=win):
         multi_line_message(experim_fin_txt, large_font, ((win_width - (win_width / 10)), 150))
         pg.display.flip()
 
+def correct_txt(selected, total):
+    if selected == total:
+        msg_to_screen_centered("Nice! " + str(selected) +  " out of " + str(total) + " correct", BLACK, large_font)
+    else:
+        msg_to_screen_centered("Sorry... " + str(selected) +  " out of " + str(total) + " correct", BLACK, large_font)
 
-def guide_screen(call, mlist, selected_targets_list, num_targ):
+def guide_screen(call, mlist, selected_targets_list, num_targ, total):
     if call == "start":
         win.fill(background_col)
-        multi_line_message(start_text(num_targ), med_font, ((win_width - (win_width / 10)), 120))
+        multi_line_message(start_text(num_targ, total), med_font, ((win_width - (win_width / 10)), 120))
         pg.display.flip()
     if call == "focus":
         win.fill(background_col)
@@ -150,7 +162,7 @@ def guide_screen(call, mlist, selected_targets_list, num_targ):
         win.fill(background_col)
         fixation_cross()
         static_draw(mlist)
-        multi_line_message(present_text(num_targ), med_font, ((win_width - (win_width / 10)), (win_height / 2 + 30)))
+        multi_line_message(present_text(num_targ, total), med_font, ((win_width - (win_width / 10)), (win_height / 2 + 30)))
         pg.display.flip()
     if call == "answer":
         static_draw(mlist)
@@ -171,15 +183,12 @@ def guide_screen(call, mlist, selected_targets_list, num_targ):
 
 def user_break_screen(game):
     win.fill(background_col)
-    msg_to_screen_centered("Let's take a break... Press F to continue", BLACK, large_font)
+    msg_to_screen_centered("You've Earned a Break!... Press F to continue", BLACK, large_font)
     pg.display.flip()
     wait_key()
-    win.fill(background_col)
-    msg_to_screen_centered(stage_txt(game), BLACK, large_font)
-    pg.display.flip()
 
 def score_screen(score):
     win.fill(background_col)
     msg_to_screen_centered("Score: " + str(score), BLACK, large_font)
     pg.display.flip()
-    pg.time.delay(2 * 1000)
+    pg.time.delay(3 * 1000)

@@ -23,6 +23,7 @@ answer_time = Tans = animation_time + 60  # time limit to make answer
 
 feedback_time = 1
 
+
 """
 Define the project display window
 """
@@ -33,19 +34,19 @@ win_dimension = (win_width, win_height)
 """
 Define instruction texts
 """
-def start_text(num_targ):
+def start_text(num_targ, total):
     return "You will first see a cross at the center of the screen. Please focus your gaze to that cross.\n\n" \
-    "There will be " + str(2 * num_targ) + " circles appearing on the screen, " + str(num_targ) + " of them will flash in GREEN.\n" \
+    "There will be " + str(total) + " circles appearing on the screen, " + str(num_targ) + " of them will flash in GREEN.\n" \
     "The cross will disappear, and all circles will start to move. Keep track of those " + str(num_targ) + \
     " flashed circles.\n\nWhen the circles stop moving, select which circles you've been tracking by clicking " \
     "them.\nWhen you have made your selection, press the SPACEBAR to submit your selection.\n\n" \
-    "Press F to start when you are ready.\n\nIf you need to stop, let the experimenter know."\
+    "Press F to start when you are ready.\n\nIf you need to stop, let the experimenter know or press ESCAPE if you are in the middle of a trial."\
     
 
 fix_text = "First, you will see this cross. Please focus your gaze here. \nPress F to continue."
 
-def present_text(num_targ): 
-    return "Then, " + str(2 * num_targ) + " circles will appear randomly around the screen. " + str(num_targ) + " random " \
+def present_text(num_targ, total): 
+    return "Now, " + str(total) + " circles will appear randomly around the screen. " + str(num_targ) + " random " \
     "circles will flash briefly. Remember which circles flashed. The cross will disappear, and all circles " \
     "will start moving when the flashing stops.\n\nPress F to continue."\
     
@@ -88,7 +89,7 @@ WHITE = [255, 255, 255]
 GREY = [128, 128, 128]
 SLATEGREY = [112, 128, 144]
 DARKSLATEGREY = [47, 79, 79]
-
+default_color = WHITE
 # == Yellows ==
 YELLOW = [255, 255, 0]
 OLIVE = [128,128,0]
