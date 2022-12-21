@@ -81,7 +81,7 @@ med_font = 42
 small_font = 12
 
 """
-Define some colours
+Define some colours.
 """
 # == Greyscale ==
 BLACK = [0, 0, 0]
