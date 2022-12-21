@@ -99,7 +99,7 @@ def msg_to_screen_centered(text, textcolor, textsize, display=win):
 
 
 def multi_line_message(text, textsize, pos=((win_width-(win_width/10)), win_height), color=BLACK, display=win):
-    """function to split text message to multiple lines and blit to display window""" 
+    """function to split text message to multiple lines and blit to display window."""
     # -- Make a list of strings split by the "\n", and each list contains words of that line as elements
     font = pg.font.SysFont("arial", textsize)
     words = [word.split(" ") for word in text.splitlines()]

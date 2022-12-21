@@ -499,7 +499,7 @@ def main():
 
     # == Variables to count how many trials have been completed ==
     completed_real_time = completed_practice_trials = completed_guide_trials = 0
-    hit_rate = [] # hit rate for d' calculation
+    hit_rate = [] # hit rate for d' calculation.
     FA_rate = [] # false alarm rate for d' calculation
 
     # == starting stages and levels ==
