@@ -32,7 +32,7 @@ win_width, win_height = 1920, 1080  # pixels; width of screen
 win_dimension = (win_width, win_height)
 
 """
-Define instruction texts
+Define instruction texts 
 """
 def start_text(num_targ, total):
     return "You will first see a cross at the center of the screen. Please focus your gaze to that cross.\n\n" \

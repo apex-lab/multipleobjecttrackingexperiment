@@ -494,7 +494,7 @@ def trials(game, CRT, recorder, gametype, time_or_trials, hit_rate, FA_rate):
         tot_time = tot_time + trial_time - break_time # results in total gameplay time (not including breaks)
 
 
-# == Main Loop ==
+# == Main Loop  ==
 def main():
 
     # == Variables to count how many trials have been completed ==
