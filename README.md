@@ -1,4 +1,16 @@
-Update Notes (11/21/22): 
+Contact info] email: dtfalk@uchicago.edu,   cell: 413-884-2553
+Update Notes (DEC 22)
+
+Hello again to all who may read this. The game is much more developed than it was before and is (hopefully) approaching the final build. Please feel free to contact me via email or text using the information above if you encounter errors, bugs, or have requests for features.
+
+I have added in an executable, but it will only work on windows. Once I can get access to a mac I will upload that as well. This means that if you have a windows device, then you will be able to run it even if you do not have Python or whatever else you would need to install to normally get this program running. It is currently a .exe file which is more secure and has a wider range of functionality, but you want it as a .bat file then you can either contact me or use a .exe to .bat converter.
+
+Instructions for executable:
+
+What still needs to be done: Add lab streaming layer, make a Mac executable, write up for "inverted d-prime value", add sounds, gameplay tweaks such as how quickly difficult increases, text formatting, general code clean up.  
+
+
+Update Notes (NOV 22): 
 Hello, this is the updated version of the multiple object tracking paradigm code. Since we last met, I have added various different functionalities. I have not cleaned it up entirely (clean code + proper commenting + bug testing) as I have been focusing on getting the main features up and running. I will go back afterwards and work on all of this so that anyone can come and edit the code to their liking. You may need to download some packages (I do not think I am using any new ones, but I cannot be sure). In this case go to your terminal and enter 'pip install your_package' where 'your_package' is the name of the missing package.
 
 Added Functionalities/Important comments/Edits:
