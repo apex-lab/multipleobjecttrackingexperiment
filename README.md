@@ -1,5 +1,6 @@
-Contact info] email: dtfalk@uchicago.edu,   cell: 413-884-2553
 Update Notes (DEC 22)
+
+Contact info] email: dtfalk@uchicago.edu,   cell: 413-884-2553
 
 Hello again to all who may read this. The game is much more developed than it was before and is (hopefully) approaching the final build. Please feel free to contact me via email or text using the information above if you encounter errors, bugs, or have requests for features.
 
@@ -8,6 +9,9 @@ I have added in an executable, but it will only work on windows. Once I can get 
 Instructions for executable: First you need to get the folder on the apex-lab/multipleobjecttracking experiment and download it. One way to do this is to go to the screen where the 'build' folder is listed along with the rest of the code files and this readme. Then click on the code button in the top right. Then click on 'download zip'. Allow it to download and then you should extract just the build folder located within the zip file you just downloaded. To make things easier you can put the build folder on your desktop.Now you should have the build folder on your desktop and you should open it. Inside there will be a 'lib' folder and an 'exe.win.....' folder. Open the 'exe.win...' folder. Within this you should see a 'MOT_exp_main.exe' executable. double click this and the game should run. The results will be saved within the 'exe.win...' folder as will the highscores. Let me know if you have any trouble with this.
 
 What still needs to be done: Add lab streaming layer, make a Mac executable, write up for "inverted d-prime value", add sounds, gameplay tweaks such as how quickly difficult increases, text formatting, general code clean up.  
+
+
+
 
 
 Update Notes (NOV 22): 
