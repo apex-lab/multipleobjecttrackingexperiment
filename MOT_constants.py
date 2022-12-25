@@ -1,7 +1,6 @@
 import math
 from random import randint, choice
-import time
-import os 
+import time 
 
 
 # == Path For Storing Trial Results. ==

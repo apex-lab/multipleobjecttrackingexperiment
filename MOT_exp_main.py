@@ -26,13 +26,6 @@ from datetime import date
 # == Attributes and relations between those attributes ==
 attributes = ["targs", "speed", "dists"]
 att_max = [3,4] 
-# If you edit att_max then I reccomend keeping the first 
-# entry as an odd number. The below code is some added functionality
-# for determining how large the range of distractors around the 
-# targets should be and it works better with odd numbers. I could
-# go into detail on request, but I will save that and just say 
-# that I reccomend using odd numbers. It still works with even numbers
-# and will not break anything if you use an even one, just a reccomendation
 scale = 1
 dist_range = att_max[1] // 2
 starting_targs = 3
