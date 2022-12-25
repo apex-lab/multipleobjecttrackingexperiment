@@ -197,26 +197,32 @@ def score_screen(score):
     pg.display.flip()
     pg.time.delay(3 * 1000)
 
+def is_valid(num):
+    if (num >= 48 and num <= 57) or (num >= 97 and num <= 122) or (num == 46):
+        return True
+    else:
+        return False
+
+
 def user_info(type):
     pg.mouse.set_visible(False)
     pg.display.flip()
-    name = current_key = "" # prepping variables
-    keypress = exit = False
+    name = "" # prepping variables
+    exit = False
 
     while True:
         for event in pg.event.get():
-            if event.type == pg.KEYDOWN and keypress == False:
-                if event.key >= 32 and event.key <= 127: # valid inputs
-                    current_key = chr(event.key)
-                    name = name + current_key
-                if event.key == pg.K_BACKSPACE:
-                    name = name[:-1] #delete last letter
-                keypress = True # prevents holding down keys for lots of letters
+            if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE or event.key == pg.K_KP_ENTER or event.key == pg.K_RETURN:
                     exit_key = event.key
                     exit = True
-            if event.type == pg.KEYUP and keypress == True:
-                keypress = False
+                elif event.key == pg.K_BACKSPACE or event.key == pg.K_DELETE:
+                    name = name[:-1] #delete last letter
+                elif is_valid(event.key):
+                    if (pg.key.get_mods() & pg.KMOD_CAPS) or (pg.key.get_mods() & pg.KMOD_SHIFT):
+                        name = name + chr(event.key).upper()
+                    else:
+                        name = name + chr(event.key)
         if exit == True:
             break
         win.fill(background_col) #display input
@@ -236,6 +242,6 @@ def high_score_info(high_score):
 
 def new_high_score(score):
     win.fill(background_col)
-    msg_to_screen_centered("New High Score! Your score: " + str(score), RED, large_font)
+    msg_to_screen_centered("New High Score! Your score: " + str(score), GREEN, large_font)
     pg.display.flip()
     pg.time.delay(5 * 1000)

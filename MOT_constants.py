@@ -105,7 +105,7 @@ DARKKHAKI = [189,183,107]
 GREEN = [0, 128, 0]
 GREENYELLOW = [173, 255, 47]
 
-RED = [220, 20, 60]
+RED = [255, 50, 50]
 
 """
 Generate random x and y coordinates within the window boundary

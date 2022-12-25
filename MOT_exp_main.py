@@ -19,12 +19,13 @@ import statistics
 import math
 from messagescreens import  *
 from datetime import date
-from psychopy.gui import DlgFromDict
+#import pylsl
+
 
 # == Game Structure Variables ==
 # == Attributes and relations between those attributes ==
 attributes = ["targs", "speed", "dists"]
-att_max = [3,3] 
+att_max = [3,4] 
 # If you edit att_max then I reccomend keeping the first 
 # entry as an odd number. The below code is some added functionality
 # for determining how large the range of distractors around the 
@@ -34,7 +35,7 @@ att_max = [3,3]
 # and will not break anything if you use an even one, just a reccomendation
 scale = 1
 dist_range = att_max[1] // 2
-starting_targs = 2
+starting_targs = 3
 
 # == how far player progresses or regresses based on performance ==
 success = 1
@@ -521,26 +522,25 @@ def main():
 
     # find where this program is stored
     if getattr(sys, 'frozen', False):
-        # The application is frozen
+        # The application is frozen (is an executable)
         file_path = os.path.dirname(sys.executable)
     else:
-        # The application is not frozen
+        # The application is not frozen (is not an executable)
         file_path = os.path.dirname(__file__)
-    # The following line has been changed to match where you store your data files:
+    results_path = os.path.join(file_path, "Results_MOT_exp")
 
-    results_path = os.path.join(file_path, "Results")
     try:
         os.mkdir(results_path)
-    except: # if folder exists then do nothing
+    except: # if folder for results exists then do nothing, otherwise create such a folder
         pass
     
-    highscore_path = os.path.join(file_path, "Highscore")
+    highscore_path = os.path.join(file_path, "Highscore_MOT_exp")
     try:
         os.mkdir(highscore_path) 
     except: # if it does exist, then grab the high score
         with open(os.path.join(highscore_path,'highscores.txt')) as f:
             i = 0
-            for line in f:
+            for line in f: # grabs highscore (last line in highscore file)
                 if i == 0:
                     pass
                 else:
