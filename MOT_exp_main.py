@@ -10,7 +10,7 @@
 # Note: MAKE EVERYTHING EASY TO CHANGE LATER
 # ------------------------------------------------------------------------------------------------
 
-# import pygame as pg
+import pygame as pg
 import sys
 import random
 import os
@@ -25,10 +25,10 @@ from datetime import date
 # == Game Structure Variables ==
 # == Attributes and relations between those attributes ==
 attributes = ["targs", "speed", "dists"]
-att_max = [3,4] 
+att_max = [3,3] 
 scale = 1
 dist_range = att_max[1] // 2
-starting_targs = 3
+starting_targs = 2
 
 # == how far player progresses or regresses based on performance ==
 success = 1
@@ -58,9 +58,8 @@ class MOTobj:
         # -- Velocity initialization (NOT 0)
         self.dx = 0
         self.dy = 0
-        while (abs(self.dx) <= 0.1 or abs(self.dy) <= 0.1):
-            self.dx = random.choice([-1,1]) * ((game["speed"])  + random.uniform(0, 1))
-            self.dy = random.choice([-1,1]) * ((game["speed"]) + random.uniform(0, 1))
+        self.dx = random.choice([-1,1]) * ((game["speed"])  + random.uniform(0.4, 0.7))
+        self.dy = random.choice([-1,1]) * ((game["speed"]) + random.uniform(0.4, 0.7))
 
         # -- Set the circle object neutral state color
         self.color = default_color
@@ -80,7 +79,7 @@ class MOTobj:
         self.color = color
 
     def in_circle(self, mouse_x, mouse_y):
-        # -- Return boolean value depending on mouse position, if it is in circle or not
+        # -- Return boolean value deping on mouse position, if it is in circle or not
         if math.sqrt(((mouse_x - self.x) ** 2) + ((mouse_y - self.y) ** 2)) < self.radius:
             return True
         else:
@@ -158,10 +157,8 @@ class MOTobj:
 
 
 def velocity_change(self, game):
-        self.dx = random.choice([-1,1]) * ((game["speed"])  + random.uniform(0, 1))
-        self.dy = random.choice([-1,1]) * ((game["speed"]) + random.uniform(0, 1))
         while (abs(self.dx) <= 0.1 or abs(self.dy) <= 0.1):
-            self.dx = random.choice([-1, 1]) * ((game["speed"])  + random.uniform(0, 1))
+            self.dx = random.choice([-1, 1]) * ((game["speed"]) + random.uniform(0, 1))
             self.dy = random.choice([-1,1]) * ((game["speed"]) + random.uniform(0, 1))
 # == returns product over elements up to and including entry n == 
 def product(list, n):
@@ -197,7 +194,6 @@ def update_game(stage):
 # == Generates a List of Objects (Balls) ==
 def generate_list(game, color):
     """function to generate new list of objects"""
-
     target_list = []
     num_targ = game["targs"]
     for nt in range(num_targ):
@@ -253,6 +249,7 @@ def end_messages(game, gametype, recorder):
     num_targs = game["targs"]
     num_dists = game["dists"]
     total = num_dists + num_targs
+    win.fill(background_col)
     if gametype == 'real':
         message_screen("exp_finished", num_targs, total)
         pg.display.flip()
@@ -297,14 +294,96 @@ def d_prime(hit_rate, running_EV):
         return "NA"
     else:
         std = statistics.stdev(hit_rate)
-        return (running_EV + (2 * mean) - 1) / std
+        dp = (running_EV + (2 * mean) - 1) / std
+        if dp > 6: # make sure no positive infinity
+            dp = 6
+        elif dp < -6: # make sure no negative infinity
+            dp = -6
+        return dp
 
+def update_stage(selected_targ, game, gametype, score, consecutive):
+    if len(selected_targ) == game["targs"]:
+        game["stage"] += success
+        consecutive += 1
+        score = update_score(score, consecutive)
+    else:
+        game["stage"] += failure
+        consecutive = 0
+        if game["stage"] < 0:
+            game["stage"] = 0
+    if gametype == 'real': 
+        score_screen(score) # display score
+    return game, score, consecutive
+
+def update_hit_rate(selected_targ, game, hit_rate, running_EV):
+    EV_trial = expected_value(game) / game["targs"] # expected proportion
+    hit_rate.append((len(selected_targ) / game["targs"]) - EV_trial) # proportion hit over expected proportion
+    running_EV = (((len(hit_rate) - 1) / len(hit_rate)) * running_EV) + ((1 / len(hit_rate)) * EV_trial)
+    dp = d_prime(hit_rate, running_EV)
+    return dp, hit_rate, running_EV
 
 # == Defines an object to flash in corner of screen for our photosensor ==
 flash_square = MOTobj(update_game(0), WHITE) 
 
+# == prepares where we store data such as results and high scores ==
+def prepare_files():
+    high_score = 0
+    date_sys = str(date.today())
+    observer = user_info("Observer: ")
+    participant = user_info("Participant: ")
+
+    if getattr(sys, 'frozen', False):
+        # The application is frozen (is an executable)
+        file_path = os.path.dirname(sys.executable)
+    else:
+        # The application is not frozen (is not an executable)
+        file_path = os.path.dirname(__file__)
+    
+    MOT_etc_path = os.path.join(file_path, "MOT_etc")
+    try: # create a folder for results and highscores if none exists
+        os.mkdir(MOT_etc_path)
+    except:
+        pass
+    results_path = os.path.join(MOT_etc_path, "Results_MOT_exp")
+
+    try:
+        os.mkdir(results_path)
+    except: # if folder for results exists then do nothing, otherwise create such a folder
+        pass
+    
+    highscore_path = os.path.join(MOT_etc_path, "Highscore_MOT_exp")
+    try:
+        os.mkdir(highscore_path) 
+    except: # if it does exist, then grab the high score
+        with open(os.path.join(highscore_path,'highscores.txt')) as f:
+            i = 0
+            for line in f: # grabs highscore (last line in highscore file)
+                if i == 0:
+                    pass
+                else:
+                    high_score = int(line)
+                i += 1
+            f.close()
+    else: # if no directory exists then create one and a highscore file
+        f = open(os.path.join(highscore_path,'highscores.txt'), 'w')
+        f.write('High Scores\n')
+        f.close()
+        f = open(os.path.join(highscore_path,'highscores.txt'), 'a')
+        f.write("0\n")
+        f.close()
+
+    # == Prepare a CSV file for trial data ==
+    mot_log = date_sys + ' pcpnt_' + participant + ' obsvr_' + observer +'.txt'
+    filename = os.path.join(results_path, mot_log)
+    log = open(filename, 'w')
+    header = ["response_time","targets_identified","total_targets","stage","timed_out","d_prime"]
+    delim = ",".join(header)
+    delim += "\n"
+    log.write(delim)
+    return log, highscore_path, high_score
+
 # == Runs Real Trials (same as practice but user performance is saved) ==
-def trials(game, CRT, recorder, gametype, time_or_trials, hit_rate, high_score):
+def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
     tot_time = 0 # keeps track of how much time has passed
     # == Messages to user based on gametype ==
     welcome_messages(game, gametype, high_score)
@@ -312,10 +391,13 @@ def trials(game, CRT, recorder, gametype, time_or_trials, hit_rate, high_score):
     # == Generates the game ==
     list_d, list_t = generate_list(game, WHITE)
     list_m = list_d + list_t
-    count = CRT
+    count = 0
     flash = True
-    reset = submitted = insufficient_selections = timeup = False
-    score = consecutive = running_EV = highest_stage = 0 # initializes score and consecutive correct trials
+    reset = False
+    submitted = False
+    insufficient_selections = False # whole lot of initiating variables in this area
+    timeup = False
+    score = consecutive = running_EV = 0 # initializes score and consecutive correct trials
     t0 = pg.time.get_ticks()
 
     # == Controls the "game" part of the game ==
@@ -397,16 +479,13 @@ def trials(game, CRT, recorder, gametype, time_or_trials, hit_rate, high_score):
                 elif Tfix + 1 < dt <= Tfl + 1.9:
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
-                    pg.mouse.set_visible(False)
                     if flash == True:
                         flash = flash_targets(list_d, list_t, flash_square, flash) # flash color
                 elif Tfl + 1.9 < dt <= Tfl + 2:
-                    pg.mouse.set_visible(False)
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     flash_targets(list_d, list_t, flash_square, flash) # reset color
                 elif Tfl + 2< dt <= Tani + 2:
-                    pg.mouse.set_visible(False)
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     animate(list_d, list_t, list_m)
@@ -421,41 +500,24 @@ def trials(game, CRT, recorder, gametype, time_or_trials, hit_rate, high_score):
                     else: 
                         static_draw(list_m)
                     pg.display.flip()
-                    t_stop = pg.time.get_ticks()
                 elif Tans + 2 < dt:
                     pg.mouse.set_visible(False)
                     timeup = True
 
             if submitted: # -- if the user submits answers properly
                 pg.mouse.set_visible(False)
+
                 # == Records info for the trial ==
                 if gametype == 'real':
-                    EV_trial = expected_value(game) / game["targs"] # expected proportion
-                    hit_rate.append((len(selected_targ) / game["targs"]) - EV_trial) # adding values to hit rate 
+                    dp, hit_rate, running_EV = update_hit_rate(selected_targ, game, hit_rate, running_EV)
                     t_sub = ((t_keypress - t0)/1000) - animation_time
-                    running_EV = (((len(hit_rate) - 1) / len(hit_rate)) * running_EV) + ((1 / len(hit_rate)) * EV_trial)
-                    dp = d_prime(hit_rate, running_EV)
                     record_response(t_sub, len(selected_targ), game, False, dp, recorder)
                 
                 # == message screen stating performance on that trial ==
-                win.fill(background_col)
                 correct_txt(len(selected_targ), len(list_t))
-                pg.display.flip()
-                delay(feedback_time + 1)
 
                 # == Based on that performance, we update the stage and score ==
-                if len(selected_targ) == len(selected_list):
-                    game["stage"] += success
-                    consecutive += 1
-                    score = update_score(score, consecutive)
-                else:
-                    game["stage"] += failure
-                    consecutive = 0
-                    if game["stage"] < 0:
-                        game["stage"] = 0
-                if gametype == 'real': 
-                    score_screen(score) # display score
-
+                game, score, consecutive = update_stage(selected_targ, game, gametype, score, consecutive)
                 reset = True
 
             if timeup: # -- if the user runs out of time
@@ -468,16 +530,12 @@ def trials(game, CRT, recorder, gametype, time_or_trials, hit_rate, high_score):
                 reset = True
 
             if reset: # -- prepare for the next trial
-
                 pg.mouse.set_visible(False)
+                # gives user break after certain amount of time
                 if take_a_break(gametype, tot_time):
-                # gives user break after certain amount of time and keeps track of length of break (not recorded)
                     break_time = pg.time.get_ticks()
-                    user_break_screen(game)
-                    break_time = pg.time.get_ticks() - break_time
-               
-                if game["stage"] > highest_stage: #update highest stage
-                    highest_stage = game["stage"]     
+                    user_break_screen()
+                    break_time = pg.time.get_ticks() - break_time  
 
                 game = update_game(game["stage"])
                 list_d, list_t = generate_list(game, WHITE)
@@ -488,89 +546,38 @@ def trials(game, CRT, recorder, gametype, time_or_trials, hit_rate, high_score):
                 submitted = timeup = insufficient_selections= reset = False
                 t0 = pg.time.get_ticks()
 
-        else: # -- end oF experiment/practice/guide
+        else: # -- end of experiment/practice/guide
             pg.mouse.set_visible(False)
-            win.fill(background_col)
             end_messages(game, gametype, recorder)
-            recorder.close
+            recorder.close()
             return score
+
+        # total gameplay time (for use in giving users a break)
         trial_time = pg.time.get_ticks() - trial_time
-        tot_time = tot_time + trial_time - break_time # results in total gameplay time (not including breaks)
+        tot_time = tot_time + trial_time - break_time 
 
 
 # == Main Loop.  ==
 def main():
-    high_score = 0
-    # == Variables to count how many trials have been completed ==
-    completed_real_time = completed_practice_trials = completed_guide_trials = 0
     hit_rate = [] # hit rate for d' calculation.
 
     # == Initiate pygame and collect user information ==
     pg.init()
-    date_sys = str(date.today())
-    observer = user_info("Observer: ")
-    participant = user_info("Participant: ")
-
-    # == create folders for results and highscores ==
-
-    # find where this program is stored
-    if getattr(sys, 'frozen', False):
-        # The application is frozen (is an executable)
-        file_path = os.path.dirname(sys.executable)
-    else:
-        # The application is not frozen (is not an executable)
-        file_path = os.path.dirname(__file__)
-    results_path = os.path.join(file_path, "Results_MOT_exp")
-
-    try:
-        os.mkdir(results_path)
-    except: # if folder for results exists then do nothing, otherwise create such a folder
-        pass
-    
-    highscore_path = os.path.join(file_path, "Highscore_MOT_exp")
-    try:
-        os.mkdir(highscore_path) 
-    except: # if it does exist, then grab the high score
-        with open(os.path.join(highscore_path,'highscores.txt')) as f:
-            i = 0
-            for line in f: # grabs highscore (last line in highscore file)
-                if i == 0:
-                    pass
-                else:
-                    high_score = int(line)
-                i += 1
-            f.close()
-    else: # if no directory exists then create one and a highscore file
-        f = open(os.path.join(highscore_path,'highscores.txt'), 'w')
-        f.write('High Scores\n')
-        f.close()
-        f = open(os.path.join(highscore_path,'highscores.txt'), 'a')
-        f.write("0\n")
-        f.close()
-
-
-
-    # == Prepare a CSV file for trial data ==
-    mot_log = date_sys + ' pcpnt_' + participant + ' obsvr_' + observer +'.txt'
-    filename = os.path.join(results_path, mot_log)
-    log = open(filename, 'w')
-    header = ["response_time", "targets_identified", "total_targets", "stage", "timed_out", "d_prime"]
-    delim = ",".join(header)
-    delim += "\n"
-    log.write(delim)
+    log, highscore_path, high_score = prepare_files()
 
     game_guide = update_game(0)
     game_prac = update_game(0)
     game_real = update_game(0)
     # == Start guide ==
-    trials(game_guide, completed_guide_trials, log, 'guide', guide_trials, hit_rate, high_score)
+    trials(game_guide, log, 'guide', guide_trials, hit_rate, high_score)
 
     # == Start practice ==
-    trials(game_prac, completed_practice_trials, log, 'practice', prac_trials, hit_rate, high_score)
+    trials(game_prac, log, 'practice', prac_trials, hit_rate, high_score)
 
     # == Start real trials, recording responses ==
-    score = trials(game_real, completed_real_time, log, 'real', real_time, hit_rate, high_score)
-    if score > high_score: # update high score
+    score = trials(game_real, log, 'real', real_time, hit_rate, high_score)
+    
+    if score > high_score: # update high score if applicable
         f = open(os.path.join(highscore_path,'highscores.txt'), 'a')
         f.writelines(str(score) + '\n')
         f.close()

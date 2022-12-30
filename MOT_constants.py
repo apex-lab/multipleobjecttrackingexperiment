@@ -43,10 +43,23 @@ def start_text(num_targ, total):
     "them.\nWhen you have made your selection, press the SPACEBAR to submit your selection.\n\n" \
     "Press F to start when you are ready.\n\nIf you need to stop, let the experimenter know or press ESCAPE if you are in the middle of a trial. "\
     "Furthermore, you may press \"k\" to skip through the guide or practice once the balls have been displayed."
+
+def start_text_nback(total_balls):
+    return "Welcome to the n-back task. \n\n" \
+    "There will be a sequence of patterns, each containing " + str(total_balls) + " black/white circles.\n\n" \
+    "Your goal is to remember these patterns and identify when a pattern repeats itself after n number of stimuli. For example, if n = 1, then" \
+    " you are performing a 1-back task and you must remember when the same pattern occurs twice in a row. For a 2-back you must identify" \
+    " when a pattern repeats with some other pattern in between. If 'x','y','z' are three patterns, then a 1-back is a sequence such as '...x,x...'"\
+    ", a 2-back is a sequence such as '...x, y, x...' and a 3-back would be '...x, y, z, x...' .\n\n" \
+    "Press the SPACEBAR when you see one of these \'n-back\' targets.\n" \
+    "Remember: In a 1-back task, you only click the spacebar for 1-backs, in a 2-back you only click the spacebar for a 2-back,... \n"\
+    "Press F to start when you are ready.\n\nIf you need to stop, let the experimenter know or press ESCAPE if you are in the middle of a trial. "\
+    "Furthermore, you may press \"k\" to skip through the guide or practice once the balls have been displayed."
     
 
 fix_text = "First, you will see this cross. Please focus your gaze here. \nPress F to continue."
 
+practice_text = "You will now practice with a 1-back task and a 2-back task. \n\nPress F to continue."
 def input_text():
     return "Please enter your information. Press Enter or Return to continue. Press ESC to exit or inform experimenter of your decision. \n\n"
 
@@ -72,6 +85,9 @@ guide_fin_txt = "The guide is now complete, and will move to practice rounds, wh
                 "experiment in normal order, but your answers will not be recorded.\n\nAfter the practice is finished, " \
                 "you will move to the real experiments where your responses will be recorded.\n\n" \
                 "Press F to move to the practice rounds."
+
+guide_fin_txt_nback = "The guide is now complete.\n\n" \
+                "Press F to move to the real rounds."
 
 guide_submit_txt = "You've selected {:d} targets correctly."
 

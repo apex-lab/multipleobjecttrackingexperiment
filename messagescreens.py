@@ -147,10 +147,13 @@ def message_screen(message, num_targ, total, display=win):
         pg.display.flip()
 
 def correct_txt(selected, total):
+    win.fill(background_col)
     if selected == total:
         msg_to_screen_centered("Good! " + str(selected) +  " out of " + str(total) + " correct", BLACK, large_font)
     else:
         msg_to_screen_centered("Sorry... " + str(selected) +  " out of " + str(total) + " correct", BLACK, large_font)
+    pg.display.flip()
+    pg.time.delay((feedback_time + 1) * 1000)
 
 def guide_screen(call, mlist, selected_targets_list, num_targ, total):
     if call == "start":
@@ -185,7 +188,7 @@ def guide_screen(call, mlist, selected_targets_list, num_targ, total):
         multi_line_message(guide_fin_txt, med_font,((win_width - (win_width / 10)), 120))
         pg.display.flip()
 
-def user_break_screen(game):
+def user_break_screen():
     win.fill(background_col)
     msg_to_screen_centered("You've Earned a Break!... Press F to continue", BLACK, large_font)
     pg.display.flip()
@@ -245,3 +248,54 @@ def new_high_score(score):
     msg_to_screen_centered("New High Score! Your score: " + str(score), GREEN, large_font)
     pg.display.flip()
     pg.time.delay(5 * 1000)
+
+def mot_screen():
+    win.fill(background_col)
+    msg_to_screen_centered("Motion Object Tracking (press F to continue)", BLACK, large_font)
+    pg.display.flip()
+    wait_key()
+#=======================================================================================
+#=======================================================================================
+#================================ NBACK MESSAGE SCREENS ================================
+#=======================================================================================
+#=======================================================================================
+
+def guide_screen_nback(call, total_balls):
+    if call == "start":
+        win.fill(background_col)
+        multi_line_message(start_text_nback(total_balls), med_font, ((win_width - (win_width / 10)), 40))
+        pg.display.flip()
+    if call == "practice":
+        win.fill(background_col)
+        multi_line_message(practice_text, large_font,((win_width - (win_width / 10)), 120))
+        pg.display.flip()
+    if call == "finished":
+        win.fill(background_col)
+        multi_line_message(guide_fin_txt_nback, large_font,((win_width - (win_width / 10)), 120))
+        pg.display.flip()
+    
+
+def correct_screen(n, correct, total):
+    n = str(n)
+    win.fill(background_col)
+    msg_to_screen_centered(str(correct) +  " out of " + str(total) + " " + "targets identified.", BLACK, large_font)
+    pg.display.flip()
+    pg.time.delay((feedback_time + 2) * 1000)
+
+def n_back_screen(game):
+    n = str(game["n"])
+    win.fill(background_col)
+    msg_to_screen_centered("This is a " + n + "-back task.", BLACK, large_font)
+    pg.display.flip()
+    pg.time.delay((feedback_time + 1) * 1000)
+
+def blank_screen():
+    win.fill(background_col)
+    pg.display.flip()
+    pg.time.delay(2 * 1000)
+
+def nback_screen():
+    win.fill(background_col)
+    msg_to_screen_centered("N-back Experiment (press F to continue)", BLACK, large_font)
+    pg.display.flip()
+    wait_key()
