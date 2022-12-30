@@ -1,11 +1,12 @@
 import math
 from random import randint, choice
 import time 
+from screeninfo import get_monitors
 
 
 # == Path For Storing Trial Results. ==
 save_path = 'C:\\Users\\Administrator\\psychexperiment\\multiple-object-tracking-paradigm\\results\\'
-
+print()
 """
 Define the object class attributes
 """
@@ -29,7 +30,14 @@ feedback_time = 1
 Define the project display window
 """
 title = "Multiple Object Tracking Experiment"
-win_width, win_height = 1920, 1080  # pixels; width of screen
+
+# getting window size (will handle dpi later)
+winfo = [] #stores monitor info as a string so we can extract window size info
+for m in get_monitors():
+    winfo.append(m)
+
+win_width = m.width
+win_height = m.height  # pixels; width of screen
 win_dimension = (win_width, win_height)
 
 """
@@ -52,7 +60,7 @@ def start_text_nback(total_balls):
     " when a pattern repeats with some other pattern in between. If 'x','y','z' are three patterns, then a 1-back is a sequence such as '...x,x...'"\
     ", a 2-back is a sequence such as '...x, y, x...' and a 3-back would be '...x, y, z, x...' .\n\n" \
     "Press the SPACEBAR when you see one of these \'n-back\' targets.\n" \
-    "Remember: In a 1-back task, you only click the spacebar for 1-backs, in a 2-back you only click the spacebar for a 2-back,... \n"\
+    "Remember: In a 1-back task, you only click the spacebar for 1-backs, in a 2-back you only click the spacebar for a 2-back,... \n\n"\
     "Press F to start when you are ready.\n\nIf you need to stop, let the experimenter know or press ESCAPE if you are in the middle of a trial. "\
     "Furthermore, you may press \"k\" to skip through the guide or practice once the balls have been displayed."
     

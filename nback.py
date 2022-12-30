@@ -347,7 +347,7 @@ def trials(game, gametype, total_blocks, highscore, log):
                                 if gametype == 'real':
                                     return score # quit the game
                                 else:
-                                    return True
+                                    return True, 0
                             elif event.key == pg.K_k: # allows you to skip to real trials
                                 if gametype == 'guide':
                                     return False
@@ -399,7 +399,7 @@ def main():
     log, highscore_path, high_score = prepare_files()
 
     # == Start guide/practice rounds  ==
-    quit = trials(generate_game(1), "guide", prac_blocks, high_score, log)
+    quit, score = trials(generate_game(1), "guide", prac_blocks, high_score, log)
 
 
     # == Start real trials, recording responses ==

@@ -105,25 +105,37 @@ def msg_to_screen_centered(text, textcolor, textsize, display=win):
 def multi_line_message(text, textsize, pos=((win_width-(win_width/10)), win_height), color=BLACK, display=win):
     """function to split text message to multiple lines and blit to display window."""
     # -- Make a list of strings split by the "\n", and each list contains words of that line as elements.
-    font = pg.font.SysFont("arial", textsize)
-    words = [word.split(" ") for word in text.splitlines()]
+    #font = pg.font.SysFont("arial", textsize)
+    #words = [word.split(" ") for word in text.splitlines()]
+    too_big = True 
 
     # -- Get the width required to render an empty space
-    space_w = font.size(" ")[0]  # .size method returns dimension in width and height. [0] gets the width
-    max_w, max_h = ((win_width-(win_width/10)), win_height)
-    text_x, text_y = pos
+    #space_w = font.size(" ")[0]  # .size method returns dimension in width and height. [0] gets the width
+    #max_w, max_h = ((win_width-(win_width/10)), win_height)
+    #text_x, text_y = pos
 
-    for line in words:
-        for word in line:
-            word_surface = font.render(word, True, color)  # get surface for each word
-            word_w, word_h = word_surface.get_size()  # get size for each word
-            if text_x + word_w >= max_w:  # if the a word exceeds the line length limit
-                text_x = (win_width/10)  # reset the x
-                text_y += word_h  # start a new row
-            display.blit(word_surface, (text_x, text_y))  # blit the text onto surface according to pos
-            text_x += word_w + space_w  # force a space between each word
-        text_x = (win_width/10)  # reset the x
-        text_y += word_h  # start a new row
+    while too_big == True:
+        font = pg.font.SysFont("arial", textsize)
+        words = [word.split(" ") for word in text.splitlines()]
+        space_w = font.size(" ")[0]  # .size method returns dimension in width and height. [0] gets the width
+        max_w, max_h = ((win_width-(win_width/10)), win_height)
+        text_x, text_y = pos
+        for line in words:
+            for word in line:
+                word_surface = font.render(word, True, color)  # get surface for each word
+                word_w, word_h = word_surface.get_size()  # get size for each word
+                if text_x + word_w >= max_w:  # if the a word exceeds the line length limit
+                    text_x = (win_width/10)  # reset the x
+                    text_y += word_h  # start a new row
+                display.blit(word_surface, (text_x, text_y))  # blit the text onto surface according to pos
+                text_x += word_w + space_w  # force a space between each word
+            text_x = (win_width/10)  # reset the x
+            text_y += word_h  # start a new row
+        if text_y <= win_height - 15:
+            too_big = False
+        else: 
+            textsize -= 3 # if too big for display then shrink the textsize and try again
+            win.fill(background_col)
     pg.display.flip()
 
 

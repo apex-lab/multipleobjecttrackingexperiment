@@ -549,7 +549,8 @@ def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
         else: # -- end of experiment/practice/guide
             pg.mouse.set_visible(False)
             end_messages(game, gametype, recorder)
-            recorder.close()
+            if gametype == 'real':
+                recorder.close()
             return score
 
         # total gameplay time (for use in giving users a break)
