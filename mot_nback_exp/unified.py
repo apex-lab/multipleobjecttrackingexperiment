@@ -4,15 +4,16 @@ from messagescreens import *
 import pygame as pg
 
 def main():
+    play_again = True
     pg.init()
-    while True:
+    while play_again == True:
         gametype = user_info("Gametype ('MOT' or 'NBACK'): ")
-        if gametype == 'MOT' or gametype == 'mot':
+        if gametype.lower() == 'mot':
             mot_screen()
-            MOT_main()
-        elif gametype.lower() == 'nback' or gametype.lower() == 'n-back':
+            play_again = MOT_main(True)
+        if gametype.lower() == 'nback':
             nback_screen()
-            nback_main()
+            play_again = nback_main(True)
 
 if __name__ == "__main__":
     main()

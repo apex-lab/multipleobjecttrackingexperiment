@@ -24,18 +24,18 @@ def wait_key():
                 return
 
 
-def draw_square(self, display=win):
+def draw_square(display=win):
         # -- Function to draw circle onto display
-        pg.draw.rect(display, self.color, pg.Rect(win_width - 20, win_height - 20, 20,20))
+        pg.draw.rect(display, WHITE, pg.Rect(win_width - 20, win_height - 20, 20,20))
 
-def flash_targets(dlist, tlist, flash_square, flash):
+def flash_targets(dlist, tlist, flash):
     """function to flash targets"""
     fixation_cross()
     if flash == True:
         for t in tlist:
             t.color = GREEN
             t.draw_circle(win)
-            draw_square(flash_square)
+            draw_square()
             flash = False
     else:
         for t in tlist:
@@ -50,12 +50,13 @@ def flash_targets(dlist, tlist, flash_square, flash):
 
 def animate(dlist, tlist, mlist):
     """function to move or animate objects on screen"""
-    for d in dlist:
-        for t in tlist:
-            d.detect_collision(mlist)
-            t.detect_collision(mlist)
-            d.draw_circle(win)
-            t.draw_circle(win)
+    #for d in dlist:
+    #   for t in tlist:
+    for m in mlist:
+        m.detect_collision(mlist)
+            #t.detect_collision(mlist)
+            #d.draw_circle(win)
+        m.draw_circle(win)
     pg.display.update()
 
 
@@ -249,6 +250,15 @@ def user_info(type):
         pg.quit()
         sys.exit()
 
+def play_again_exp():
+    response = user_info("Play again? (type \'y\' for yes or \'n\' for no): ")
+    while True:
+        if response.lower() == 'y':
+            return True
+        if response.lower() == 'n':
+            return False
+        response = user_info("Play again? (type \'y\' for yes or \'n\' for no): ")
+
 def high_score_info(high_score):
     win.fill(background_col)
     msg_to_screen_centered("Current High Score: " + str(high_score), BLACK, large_font)
@@ -272,10 +282,10 @@ def mot_screen():
 #=======================================================================================
 #=======================================================================================
 
-def guide_screen_nback(call, total_balls):
+def guide_screen_nback(call):
     if call == "start":
         win.fill(background_col)
-        multi_line_message(start_text_nback(total_balls), med_font, ((win_width - (win_width / 10)), 40))
+        multi_line_message(start_text_nback(), med_font, ((win_width - (win_width / 10)), 40))
         pg.display.flip()
     if call == "practice":
         win.fill(background_col)
@@ -286,16 +296,15 @@ def guide_screen_nback(call, total_balls):
         multi_line_message(guide_fin_txt_nback, large_font,((win_width - (win_width / 10)), 120))
         pg.display.flip()
     
-
-def correct_screen(n, correct, total):
+def correct_screen(n, correct, fa, total):
     n = str(n)
     win.fill(background_col)
-    msg_to_screen_centered(str(correct) +  " out of " + str(total) + " " + "targets identified.", BLACK, large_font)
+    msg_to_screen_centered(str(correct) +  " out of " + str(total) + " " + "targets identified with " + str(fa) + " mis-clicks.", BLACK, large_font)
     pg.display.flip()
     pg.time.delay((feedback_time + 2) * 1000)
 
-def n_back_screen(game):
-    n = str(game["n"])
+def n_back_screen(n):
+    n = str(n)
     win.fill(background_col)
     msg_to_screen_centered("This is a " + n + "-back task.", BLACK, large_font)
     pg.display.flip()

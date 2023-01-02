@@ -1,12 +1,9 @@
 # ------------------------------------------------------------------------------------------------
 # BUGS/things to edit/things to consider: 
-# 1) add additional message screens (make level/stage premise more clear?).
-# 2) code cleanliness (test lines, commenting format, redundencies, difficult to understand
+# 1) code cleanliness (test lines, commenting format, redundencies, difficult to understand
 #    variables,etc ...)
-# 3) perhaps edit generate_list() so that we set a minimum velocity s.t. |min_vel| > 0
 #  General Note: want to be addictive (think flow), not too boring and not too difficult
-# 4) adding music to keeping people engaged (come up with ideas from playing alot, wait to implement) 
-# 5) Incorportate Lab Streaming Layer functionality
+# 2) Incorportate Lab Streaming Layer functionality
 # Note: MAKE EVERYTHING EASY TO CHANGE LATER
 # ------------------------------------------------------------------------------------------------
 
@@ -15,11 +12,11 @@ import sys
 import random
 import os
 from scipy.special import comb
-import statistics
+import scipy.stats as scip
 import math
 from messagescreens import  *
-from datetime import date
-#import pylsl
+from datetime import *
+from pylsl import StreamInfo, StreamOutlet 
 
 
 # == Game Structure Variables ==
@@ -44,10 +41,9 @@ FPS = 144
 
 # == Defines the Objects (Balls) and their Properties ==
 class MOTobj:
-    def __init__(self, game, default_color,):
+    def __init__(self, game, default_color):
         # -- Radius of the circle objects
         self.radius = obj_radius
-
 
         # -- Object positions attributes
         self.x, self.y = choice([n for n in range(int(boundary["left"]), int(boundary["right"]))
@@ -55,11 +51,8 @@ class MOTobj:
                          choice([n for n in range(int(boundary["up"]), int(boundary["down"]))
                                  if n not in range(y - self.radius, y + self.radius)])
         
-        # -- Velocity initialization (NOT 0)
-        self.dx = 0
-        self.dy = 0
-        self.dx = random.choice([-1,1]) * ((game["speed"])  + random.uniform(0.4, 0.7))
-        self.dy = random.choice([-1,1]) * ((game["speed"]) + random.uniform(0.4, 0.7))
+        # -- Velocity initialization
+        self.dx, self.dy = velocity(game)
 
         # -- Set the circle object neutral state color
         self.color = default_color
@@ -74,7 +67,6 @@ class MOTobj:
         self.isClicked = False
         self.isSelected = False
     
-
     def change_color(self, color):
         self.color = color
 
@@ -109,6 +101,11 @@ class MOTobj:
             self.isClicked = False
             self.isSelected = True
 
+    def draw_circle(self, display=win):
+        # -- Function to draw circle onto display
+        pg.draw.circle(display, self.color, (int(self.x), int(self.y)), self.radius)
+        
+    # add a fix for when dx/dy equals 0 (probably in brownian motion)
     def detect_collision(self, mlist):
         # -- Object positions in x and y coordinates change in velocity value
         self.x += self.dx
@@ -126,11 +123,6 @@ class MOTobj:
                 if a != b:
                     if math.sqrt(((a.x - b.x) ** 2) + ((a.y - b.y) ** 2)) <= (a.radius + b.radius):
                         brownian_motion(a, b)
-
-    def draw_circle(self, display=win):
-        # -- Function to draw circle onto display
-        pg.draw.circle(display, self.color, (int(self.x), int(self.y)), self.radius)
-
 
     def flash_color(self, issquare):
         # -- Function to flash color
@@ -155,11 +147,16 @@ class MOTobj:
         self.y = choice([n for n in range(int(boundary["up"]), int(boundary["down"]))
                          if n not in range(y - self.radius, y + self.radius)])
 
+# get initial dx and dy values for balls
+def velocity(game):
+    speed = game["speed"]
+    overall_velocity = math.sqrt(2 * ((speed + 1)** 2))
+    dx = random.choice([-1,1]) * random.uniform(0, overall_velocity)
+    dy = random.choice([-1,1]) * math.sqrt((overall_velocity ** 2) - (dx ** 2))
+    dx = ((1 + (0.5 * (1 - speed))) * dx)
+    dy = ((1 + (0.5 * (1 - speed))) * dy)
+    return dx, dy
 
-def velocity_change(self, game):
-        while (abs(self.dx) <= 0.1 or abs(self.dy) <= 0.1):
-            self.dx = random.choice([-1, 1]) * ((game["speed"]) + random.uniform(0, 1))
-            self.dy = random.choice([-1,1]) * ((game["speed"]) + random.uniform(0, 1))
 # == returns product over elements up to and including entry n == 
 def product(list, n):
     prod = 1
@@ -206,7 +203,6 @@ def generate_list(game, color):
         d = MOTobj(game, color)
         distractor_list.append(d)
     return distractor_list, target_list
-
 
 # == Helper Function for Delaying Game by t seconds ==
 def delay(t):
@@ -265,7 +261,7 @@ def end_messages(game, gametype, recorder):
 
 # == determines whether a user can take a break == 
 def take_a_break(gametype, tot_time):
-    if gametype == 'real' and tot_time % (6 * (10 ** 5)) == 0:
+    if gametype == 'real' and tot_time > (6 * (10 ** 5)):
         return True
     return False
 
@@ -284,22 +280,39 @@ def expected_value(game):
         EV += i * (numerator / denominator)
     return EV
 
-def d_prime(hit_rate, running_EV):
-    # this is the inverted d' I concocted because the original d' is not calculable given our information
-    # this formula looks like it comes out of nowhere but the read me (once i update it) will include
-    # a link to its derivation. Note that positive d' indicates high signal recognition and negative d'
-    # indicates random chance. 0 suggests a half way point between signal and chance
-    mean = statistics.mean(hit_rate)
-    if len(hit_rate) <= 1:
-        return "NA"
-    else:
-        std = statistics.stdev(hit_rate)
-        dp = (running_EV + (2 * mean) - 1) / std
-        if dp > 6: # make sure no positive infinity
-            dp = 6
-        elif dp < -6: # make sure no negative infinity
-            dp = -6
-        return dp
+# == calculates d-prime value ==
+def d_prime(dprimes, hit_rate, game):
+    total_targs = game["targs"]
+    total_balls = game["targs"] + game["dists"]
+
+    hits = round(hit_rate[-1] * total_targs) # calculate targets correctly identified
+    misses = total_targs - hits # total misses (which in MOT is equivalent to false alarms)
+    farate = misses / (total_balls - total_targs)
+    correct_rejections = (total_balls - total_targs) - misses # number of correct rejections
+
+    # values for fixing extreme d primes
+    half_hit = 0.5 / (hits + misses)
+    half_fa = 0.5 / (misses + correct_rejections)
+    # fix extreme hit rate
+    hitrate = hit_rate[-1]
+    if hitrate == 1:
+        hitrate = 1 - half_hit
+    if hitrate == 0:
+        hitrate = half_hit
+
+    # fix extreme fa rate
+    if farate == 1:
+        farate = 1 - half_fa
+    if farate == 0:
+        farate = half_fa
+
+    # calculate z values
+    z_hit = scip.norm.ppf(hitrate)
+    z_fa = scip.norm.ppf(farate)
+
+    dp = z_hit - z_fa # calculate d prime
+    dprimes.append(dp) # add to list
+    return dprimes
 
 def update_stage(selected_targ, game, gametype, score, consecutive):
     if len(selected_targ) == game["targs"]:
@@ -314,16 +327,6 @@ def update_stage(selected_targ, game, gametype, score, consecutive):
     if gametype == 'real': 
         score_screen(score) # display score
     return game, score, consecutive
-
-def update_hit_rate(selected_targ, game, hit_rate, running_EV):
-    EV_trial = expected_value(game) / game["targs"] # expected proportion
-    hit_rate.append((len(selected_targ) / game["targs"]) - EV_trial) # proportion hit over expected proportion
-    running_EV = (((len(hit_rate) - 1) / len(hit_rate)) * running_EV) + ((1 / len(hit_rate)) * EV_trial)
-    dp = d_prime(hit_rate, running_EV)
-    return dp, hit_rate, running_EV
-
-# == Defines an object to flash in corner of screen for our photosensor ==
-flash_square = MOTobj(update_game(0), WHITE) 
 
 # == prepares where we store data such as results and high scores ==
 def prepare_files():
@@ -355,7 +358,7 @@ def prepare_files():
     try:
         os.mkdir(highscore_path) 
     except: # if it does exist, then grab the high score
-        with open(os.path.join(highscore_path,'highscores.txt')) as f:
+        with open(os.path.join(highscore_path,'highscores.csv')) as f:
             i = 0
             for line in f: # grabs highscore (last line in highscore file)
                 if i == 0:
@@ -365,30 +368,32 @@ def prepare_files():
                 i += 1
             f.close()
     else: # if no directory exists then create one and a highscore file
-        f = open(os.path.join(highscore_path,'highscores.txt'), 'w')
+        f = open(os.path.join(highscore_path,'highscores.csv'), 'w')
         f.write('High Scores\n')
         f.close()
-        f = open(os.path.join(highscore_path,'highscores.txt'), 'a')
+        f = open(os.path.join(highscore_path,'highscores.csv'), 'a')
         f.write("0\n")
         f.close()
 
     # == Prepare a CSV file for trial data ==
-    mot_log = date_sys + ' pcpnt_' + participant + ' obsvr_' + observer +'.txt'
+    mot_log = date_sys + ' pcpnt_' + participant + ' obsvr_' + observer +'.csv'
     filename = os.path.join(results_path, mot_log)
     log = open(filename, 'w')
     header = ["response_time","targets_identified","total_targets","stage","timed_out","d_prime"]
     delim = ",".join(header)
     delim += "\n"
     log.write(delim)
-    return log, highscore_path, high_score
+    return log, highscore_path, high_score, observer, participant, date_sys
 
 # == Runs Real Trials (same as practice but user performance is saved) ==
-def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
+def trials(game, recorder, gametype, time_or_trials, high_score, outlet):
     tot_time = 0 # keeps track of how much time has passed
     # == Messages to user based on gametype ==
     welcome_messages(game, gametype, high_score)
 
     # == Generates the game ==
+    hit_rates = []
+    dprimes = []
     list_d, list_t = generate_list(game, WHITE)
     list_m = list_d + list_t
     count = 0
@@ -397,14 +402,15 @@ def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
     submitted = False
     insufficient_selections = False # whole lot of initiating variables in this area
     timeup = False
-    score = consecutive = running_EV = 0 # initializes score and consecutive correct trials
+    score = consecutive = 0 # initializes score and consecutive correct trials
     t0 = pg.time.get_ticks()
 
     # == Controls the "game" part of the game ==
     while True:
-        break_time = 0
         trial_time = pg.time.get_ticks() # keep track of trial length (including possible breaks)
         num_targs = game["targs"]
+        pushed_flash_already = False
+        pushed_motion_already = False
         pg.time.Clock().tick_busy_loop(FPS)  # = Set FPS
 
         win.fill(background_col)  # - fill background with background color
@@ -420,14 +426,16 @@ def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
                 sys.exit()
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_k and (gametype == 'guide' or gametype == 'practice'):
-                    return True
+                    return 'k'
                 if event.key == pg.K_ESCAPE: # what is going on here
-                    if gametype == 'guide' or gametype == 'practice':
-                        pg.quit()
-                        sys.exit()
+                    if gametype == 'real':
+                        outlet.push_sample(['esc'])
+                        return score
                     else:
-                        return(score)
+                        return 'esc'
                 if event.key == pg.K_SPACE:
+                    if gametype == 'real':    
+                        outlet.push_sample(['space'])
                     if not reset:
                         for target in list_t:
                             if target.isSelected and not target.isClicked:
@@ -441,22 +449,21 @@ def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
                             t_keypress = pg.time.get_ticks()
                         else:
                             insufficient_selections = True
-
             for obj in list_m:
                 if obj.in_circle(mx, my):
                     if event.type == pg.MOUSEMOTION:
                         if not obj.isClicked and not obj.isSelected:
                             obj.state_control("hovered")
                     if event.type == pg.MOUSEBUTTONDOWN:
+                        if gametype == 'real':    
+                            outlet.push_sample(['click'])
                         if not obj.isClicked and not obj.isSelected:
                             obj.state_control("clicked")
                         if not obj.isClicked and obj.isSelected:
                             obj.state_control("neutral")
-
                     if event.type == pg.MOUSEBUTTONUP:
                         if obj.isClicked and not obj.isSelected:
                             obj.state_control("selected")
-
                 elif not obj.in_circle(mx, my):
                     if event.type == pg.MOUSEMOTION:
                         if not obj.isClicked and not obj.isSelected:
@@ -480,16 +487,28 @@ def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     if flash == True:
-                        flash = flash_targets(list_d, list_t, flash_square, flash) # flash color
+                        if gametype == 'real':
+                            outlet.push_sample(['flash_start'])
+                        flash = flash_targets(list_d, list_t, flash) # flash color
                 elif Tfl + 1.9 < dt <= Tfl + 2:
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
-                    flash_targets(list_d, list_t, flash_square, flash) # reset color
-                elif Tfl + 2< dt <= Tani + 2:
+                    if gametype == 'real' and pushed_flash_already == False:
+                        outlet.push_sample(['flash_stop'])
+                        pushed_flash_already = True
+                    flash_targets(list_d, list_t, flash) # reset color
+                elif Tfl + 2 < dt <= Tani + 2:
+                    pushed_flash_already = False
+                    if gametype == 'real' and pushed_motion_already == False:
+                        outlet.push_sample(['move_start'])
+                        pushed_motion_already = True
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     animate(list_d, list_t, list_m)
                 elif Tani + 2 < dt <= Tans+ 2:
+                    if gametype == 'real' and pushed_motion_already == True:
+                        outlet.push_sample(['move_stop'])
+                        pushed_motion_already = False 
                     if Tani + 2 < dt <= Tani + 2.05: # reset mouse position
                         pg.mouse.set_pos([960,540])
                     pg.mouse.set_visible(True)
@@ -509,9 +528,10 @@ def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
 
                 # == Records info for the trial ==
                 if gametype == 'real':
-                    dp, hit_rate, running_EV = update_hit_rate(selected_targ, game, hit_rate, running_EV)
+                    hit_rates.append(len(selected_targ) / len(selected_list))
+                    dprimes = d_prime(dprimes, hit_rates, game)
                     t_sub = ((t_keypress - t0)/1000) - animation_time
-                    record_response(t_sub, len(selected_targ), game, False, dp, recorder)
+                    record_response(t_sub, len(selected_targ), game, False, dprimes[-1], recorder)
                 
                 # == message screen stating performance on that trial ==
                 pg.mouse.set_visible(False)
@@ -534,9 +554,8 @@ def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
                 pg.mouse.set_visible(False)
                 # gives user break after certain amount of time
                 if take_a_break(gametype, tot_time):
-                    break_time = pg.time.get_ticks()
-                    user_break_screen()
-                    break_time = pg.time.get_ticks() - break_time  
+                    user_break_screen()  
+                    tot_time = 0
 
                 game = update_game(game["stage"])
                 list_d, list_t = generate_list(game, WHITE)
@@ -552,42 +571,62 @@ def trials(game, recorder, gametype, time_or_trials, hit_rate, high_score):
             end_messages(game, gametype, recorder)
             if gametype == 'real':
                 recorder.close()
-            return score
+                return score
+            else:
+                return "complete" # signifies succesful completion of prac/guide trials
 
         # total gameplay time (for use in giving users a break)
         trial_time = pg.time.get_ticks() - trial_time
-        tot_time = tot_time + trial_time - break_time 
-
+        tot_time += trial_time 
 
 # == Main Loop.  ==
-def main():
-    hit_rate = [] # hit rate for d' calculation.
-
-    # == Initiate pygame and collect user information ==
-    pg.init()
-    log, highscore_path, high_score = prepare_files()
-
-    game_guide = update_game(0)
-    game_prac = update_game(0)
-    game_real = update_game(0)
+def main(unified):
+    mot_play_again = True
+    while mot_play_again == True:
+        # == Initiate pygame and collect user information ==
+        now = datetime.now()
+        time = now.strftime("%H:%M:%S") # get current time
+        pg.init()
+        log, highscore_path, high_score, observer, participant, date_sys = prepare_files()
     
-    # == Start guide ==
-    trials(game_guide, log, 'guide', guide_trials, hit_rate, high_score)
+        # prepare lab streaming layer functionality
+        info = StreamInfo('MOT_stream', 'Markers', 1, 0, 'string', '_Obs_' + observer + '_ptcpt_' + participant + '_' + date_sys + '_' + time)
+        outlet = StreamOutlet(info)
 
-    # == Start practice ==
-    trials(game_prac, log, 'practice', prac_trials, hit_rate, high_score)
-
-    # == Start real trials, recording responses ==
-    score = trials(game_real, log, 'real', real_time, hit_rate, high_score)
+        game_guide = update_game(0)
+        game_prac = update_game(0)
+        game_real = update_game(0)
     
-    if score > high_score: # update high score if applicable
-        f = open(os.path.join(highscore_path,'highscores.txt'), 'a')
-        f.writelines(str(score) + '\n')
-        f.close()
-        new_high_score(score)
+        # == Start guide ==
+        key = trials(game_guide, log, 'guide', guide_trials, high_score, outlet)
 
-    pg.quit()
-    sys.exit()
+        # == Start practice ==
+        if key == 'k' or key == 'complete':
+            key = trials(game_prac, log, 'practice', prac_trials, high_score, outlet)
+
+        # == Start real trials, recording responses ==
+        if key == 'k' or key == 'complete':
+            score = trials(game_real, log, 'real', real_time, high_score, outlet)
+        else:
+            score = 0
+    
+        if score > high_score: # update high score if applicable
+            f = open(os.path.join(highscore_path,'highscores.csv'), 'a')
+            f.writelines(str(score) + '\n')
+            f.close()
+            new_high_score(score)
+
+        # allow user to play again without rerunning program
+        mot_play_again = play_again_exp()
+        if mot_play_again == True:
+            if unified == True:
+                return True
+        else:
+            if unified == True:
+                return False
+            else:
+                pg.quit()
+                sys.exit()
 
 if __name__ == "__main__":
-    main()
+    main(False)
