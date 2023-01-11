@@ -62,9 +62,9 @@ def generate_trial(n):
         del repeats_alt[0] # remove the current index so we access the proper one in the next iteration
     for i in range(block_length): # fill in remaining blank spaces
         if sequence_list[i] == 0:    
-            letter = random.choice(range(65,91))
+            letter = chr(random.choice(range(65,91)))
             while letter in sequence_list:
-                letter = random.choice(range(65,91))
+                letter = chr(random.choice(range(65,91)))
             sequence_list[i] = letter
         #if sequence_list[i] == 0:
             # multiple cases to prevent out of bound errors
