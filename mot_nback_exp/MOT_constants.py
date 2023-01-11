@@ -19,7 +19,7 @@ fix_draw_time = Tfix = 1.5 # time to present fixation cross and objects
 
 flash_time = Tfl = fix_draw_time + 1  # time for targets to flash
 
-animation_time = Tani = flash_time + 4  # time for objects to move around in seconds
+animation_time = Tani = flash_time + 4.5  # time for objects to move around in seconds
 
 answer_time = Tans = animation_time + 60  # time limit to make answer
 

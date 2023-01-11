@@ -9,7 +9,7 @@ import sys
 import os
 import scipy.stats as scip
 from datetime import *
-from pylsl import StreamInfo, StreamOutlet 
+#from pylsl import StreamInfo, StreamOutlet 
 
 block_length = 15 # how many stimuli per block
 stimulus_time = 3 * 1000 # how long each stimulus is on the screen for (ms)
@@ -61,18 +61,23 @@ def generate_trial(n):
         del index_alt[0] # remove the current index so we access the proper one in the next iteration
         del repeats_alt[0] # remove the current index so we access the proper one in the next iteration
     for i in range(block_length): # fill in remaining blank spaces
-        if sequence_list[i] == 0:
-            # multiple cases to prevent out of bound errors
-            if i >= n and not (i <= block_length - n - 1):
-                while letter == sequence_list[i - n]: # check backwards, not forwards
-                    letter = chr(random.choice(range(65,91)))
-            elif i <= block_length - n - 1 and not (i >= n):  # check backwards, not forwards
-                while letter == sequence_list[i + n]: # make sure we dont accidentally add another nback
-                    letter = chr(random.choice(range(65,91)))
-            else:  # check both backwards and forwards
-                while letter == sequence_list[i + n] or letter == sequence_list[i - n]: # make sure we dont accidentally add another nback
-                    letter = chr(random.choice(range(65,91)))
+        if sequence_list[i] == 0:    
+            letter = random.choice(range(65,91))
+            while letter in sequence_list:
+                letter = random.choice(range(65,91))
             sequence_list[i] = letter
+        #if sequence_list[i] == 0:
+            # multiple cases to prevent out of bound errors
+        #    if i >= n and not (i <= block_length - n - 1):
+        #        while letter == sequence_list[i - n]: # check backwards, not forwards
+        #            letter = chr(random.choice(range(65,91)))
+        #    elif i <= block_length - n - 1 and not (i >= n):  # check backwards, not forwards
+        #        while letter == sequence_list[i + n]: # make sure we dont accidentally add another nback
+        #            letter = chr(random.choice(range(65,91)))
+        #    else:  # check both backwards and forwards
+        #        while letter == sequence_list[i + n] or letter == sequence_list[i - n]: # make sure we dont accidentally add another nback
+        #            letter = chr(random.choice(range(65,91)))
+        #    sequence_list[i] = letter
     return index, sequence_list
 
 # function for recording responses
@@ -243,7 +248,7 @@ def d_prime(hit_rate, fa_rate, dprimes, total_hits):
     return dprimes
 
 # runs trials (possible off by one errors.)
-def trials(n, gametype, total_blocks, highscore, log, outlet):
+def trials(n, gametype, total_blocks, highscore, log):#, outlet):
     # initializing variables    
     # ==============================================================================================
     message_shown = False
@@ -277,7 +282,7 @@ def trials(n, gametype, total_blocks, highscore, log, outlet):
                 if dt <= stimulus_time: # displays a single stimulus
                     stim_end = False
                     if stim_start == False:
-                        outlet.push_sample(['stim_start']) 
+                        #outlet.push_sample(['stim_start']) 
                         stim_start = True
                     for event in pg.event.get(): # key control
                         if event.type == pg.QUIT:
@@ -285,13 +290,13 @@ def trials(n, gametype, total_blocks, highscore, log, outlet):
                             sys.exit()
                         if event.type == pg.KEYDOWN:
                             if event.key == pg.K_SPACE:
-                                outlet.push_sample(['space'])
+                                #outlet.push_sample(['space'])
                                 if submitted == False:
                                     submitted = True # record key press 
                                     responses[count] = 1 # user believes it is an nback target
                             elif event.key == pg.K_q or event.key == pg.K_ESCAPE:
                                 if gametype == 'real':
-                                    outlet.push_sample(['esc'])
+                                    #outlet.push_sample(['esc'])
                                     return score # quit the game
                                 else:
                                     return 'esc'
@@ -301,7 +306,7 @@ def trials(n, gametype, total_blocks, highscore, log, outlet):
                     display_stimulus(letter)
                 else: # switches stimulus
                     if stim_end == False:
-                        outlet.push_sample(['stim_stop'])
+                        #outlet.push_sample(['stim_stop'])
                         stim_end = True
                     if submitted == False:
                         responses[count] = 0 # if user does not respond, then record their nonresponse
@@ -352,16 +357,16 @@ def main(unified):
         log, highscore_path, high_score, observer, participant, date_sys = prepare_files()
 
         # prepare lab streaming layer functionality
-        info = StreamInfo('MOT_stream', 'Markers', 1, 0, 'string', '_Obs_' + observer + '_ptcpt_' + participant + '_' + date_sys + '_' + time)
-        outlet = StreamOutlet(info)
+        #info = StreamInfo('MOT_stream', 'Markers', 1, 0, 'string', '_Obs_' + observer + '_ptcpt_' + participant + '_' + date_sys + '_' + time)
+        #outlet = StreamOutlet(info)
 
         # == Start guide/practice rounds  ==
-        key = trials(1, "guide", prac_blocks, high_score, log, outlet)
+        key = trials(1, "guide", prac_blocks, high_score, log)#, outlet)
         score = 0
 
         # == Start real trials, recording responses ==
         if key == 'k' or 'completed':
-            score = trials(1, "real", real_blocks, high_score, log, outlet)
+            score = trials(1, "real", real_blocks, high_score, log)#, outlet)
         else:
             score = 0
             

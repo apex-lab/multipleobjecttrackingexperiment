@@ -16,7 +16,7 @@ import scipy.stats as scip
 import math
 from messagescreens import  *
 from datetime import *
-from pylsl import StreamInfo, StreamOutlet 
+#from pylsl import StreamInfo, StreamOutlet 
 
 
 # == Game Structure Variables ==
@@ -25,7 +25,7 @@ attributes = ["targs", "speed", "dists"]
 att_max = [3,3] 
 scale = 1
 dist_range = att_max[1] // 2
-starting_targs = 2
+starting_targs = 3
 
 # == how far player progresses or regresses based on performance ==
 success = 1
@@ -150,11 +150,11 @@ class MOTobj:
 # get initial dx and dy values for balls
 def velocity(game):
     speed = game["speed"]
-    overall_velocity = math.sqrt(2 * ((speed + 1)** 2))
+    overall_velocity = math.sqrt(2 * ((speed + 3) ** 2))
     dx = random.choice([-1,1]) * random.uniform(0, overall_velocity)
     dy = random.choice([-1,1]) * math.sqrt((overall_velocity ** 2) - (dx ** 2))
-    dx = ((1 + (0.5 * (1 - speed))) * dx)
-    dy = ((1 + (0.5 * (1 - speed))) * dy)
+    #dx = ((1 + (0.5 * (1 - speed))) * dx)
+    #dy = ((1 + (0.5 * (1 - speed))) * dy)
     return dx, dy
 
 # == returns product over elements up to and including entry n == 
@@ -386,7 +386,7 @@ def prepare_files():
     return log, highscore_path, high_score, observer, participant, date_sys
 
 # == Runs Real Trials (same as practice but user performance is saved) ==
-def trials(game, recorder, gametype, time_or_trials, high_score, outlet):
+def trials(game, recorder, gametype, time_or_trials, high_score): #, outlet):
     tot_time = 0 # keeps track of how much time has passed
     # == Messages to user based on gametype ==
     welcome_messages(game, gametype, high_score)
@@ -400,6 +400,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, outlet):
     flash = True
     reset = False
     submitted = False
+    sound_played = False
     insufficient_selections = False # whole lot of initiating variables in this area
     timeup = False
     score = consecutive = 0 # initializes score and consecutive correct trials
@@ -429,13 +430,14 @@ def trials(game, recorder, gametype, time_or_trials, high_score, outlet):
                     return 'k'
                 if event.key == pg.K_ESCAPE: # what is going on here
                     if gametype == 'real':
-                        outlet.push_sample(['esc'])
+                        #outlet.push_sample(['esc'])
                         return score
                     else:
                         return 'esc'
                 if event.key == pg.K_SPACE:
                     if gametype == 'real':    
-                        outlet.push_sample(['space'])
+                        #outlet.push_sample(['space'])
+                        pass
                     if not reset:
                         for target in list_t:
                             if target.isSelected and not target.isClicked:
@@ -456,7 +458,8 @@ def trials(game, recorder, gametype, time_or_trials, high_score, outlet):
                             obj.state_control("hovered")
                     if event.type == pg.MOUSEBUTTONDOWN:
                         if gametype == 'real':    
-                            outlet.push_sample(['click'])
+                            #outlet.push_sample(['click'])
+                            pass
                         if not obj.isClicked and not obj.isSelected:
                             obj.state_control("clicked")
                         if not obj.isClicked and obj.isSelected:
@@ -483,31 +486,33 @@ def trials(game, recorder, gametype, time_or_trials, high_score, outlet):
                         targ.state_control("neutral")
                     pg.mouse.set_visible(False)
                     fixation_screen(list_m)
-                elif Tfix + 1 < dt <= Tfl + 1.9:
+                elif Tfix + 1 < dt <= Tfl + 1.95:
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     if flash == True:
                         if gametype == 'real':
-                            outlet.push_sample(['flash_start'])
+                            #outlet.push_sample(['flash_start'])
+                            pass
                         flash = flash_targets(list_d, list_t, flash) # flash color
-                elif Tfl + 1.9 < dt <= Tfl + 2:
+                        dt = Tfl + 1.95
+                elif Tfl + 1.95 < dt <= Tfl + 2:
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     if gametype == 'real' and pushed_flash_already == False:
-                        outlet.push_sample(['flash_stop'])
+                        #outlet.push_sample(['flash_stop'])
                         pushed_flash_already = True
                     flash_targets(list_d, list_t, flash) # reset color
                 elif Tfl + 2 < dt <= Tani + 2:
                     pushed_flash_already = False
                     if gametype == 'real' and pushed_motion_already == False:
-                        outlet.push_sample(['move_start'])
+                        #outlet.push_sample(['move_start'])
                         pushed_motion_already = True
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     animate(list_d, list_t, list_m)
                 elif Tani + 2 < dt <= Tans+ 2:
                     if gametype == 'real' and pushed_motion_already == True:
-                        outlet.push_sample(['move_stop'])
+                        #outlet.push_sample(['move_stop'])
                         pushed_motion_already = False 
                     if Tani + 2 < dt <= Tani + 2.05: # reset mouse position
                         pg.mouse.set_pos([960,540])
@@ -524,7 +529,6 @@ def trials(game, recorder, gametype, time_or_trials, high_score, outlet):
                     timeup = True
 
             if submitted: # -- if the user submits answers properly
-                pg.mouse.set_visible(False)
 
                 # == Records info for the trial ==
                 if gametype == 'real':
@@ -536,6 +540,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, outlet):
                 # == message screen stating performance on that trial ==
                 pg.mouse.set_visible(False)
                 correct_txt(len(selected_targ), len(list_t))
+                pg.mouse.set_visible(False)
 
                 # == Based on that performance, we update the stage and score ==
                 game, score, consecutive = update_stage(selected_targ, game, gametype, score, consecutive)
@@ -563,7 +568,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, outlet):
                 if gametype != 'real':
                     count += 1
                 flash = True
-                submitted = timeup = insufficient_selections= reset = False
+                submitted = timeup = insufficient_selections= reset = sound_played = False
                 t0 = pg.time.get_ticks()
 
         else: # -- end of experiment/practice/guide
@@ -587,26 +592,27 @@ def main(unified):
         now = datetime.now()
         time = now.strftime("%H:%M:%S") # get current time
         pg.init()
+        pg.mixer.init()
         log, highscore_path, high_score, observer, participant, date_sys = prepare_files()
     
         # prepare lab streaming layer functionality
-        info = StreamInfo('MOT_stream', 'Markers', 1, 0, 'string', '_Obs_' + observer + '_ptcpt_' + participant + '_' + date_sys + '_' + time)
-        outlet = StreamOutlet(info)
+        #info = StreamInfo('MOT_stream', 'Markers', 1, 0, 'string', '_Obs_' + observer + '_ptcpt_' + participant + '_' + date_sys + '_' + time)
+        #outlet = StreamOutlet(info)
 
         game_guide = update_game(0)
         game_prac = update_game(0)
         game_real = update_game(0)
     
         # == Start guide ==
-        key = trials(game_guide, log, 'guide', guide_trials, high_score, outlet)
+        key = trials(game_guide, log, 'guide', guide_trials, high_score)#, outlet)
 
         # == Start practice ==
         if key == 'k' or key == 'complete':
-            key = trials(game_prac, log, 'practice', prac_trials, high_score, outlet)
+            key = trials(game_prac, log, 'practice', prac_trials, high_score)#, outlet)
 
         # == Start real trials, recording responses ==
         if key == 'k' or key == 'complete':
-            score = trials(game_real, log, 'real', real_time, high_score, outlet)
+            score = trials(game_real, log, 'real', real_time, high_score)#, outlet)
         else:
             score = 0
     
@@ -617,6 +623,7 @@ def main(unified):
             new_high_score(score)
 
         # allow user to play again without rerunning program
+        pg.mixer.quit()
         mot_play_again = play_again_exp()
         if mot_play_again == True:
             if unified == True:

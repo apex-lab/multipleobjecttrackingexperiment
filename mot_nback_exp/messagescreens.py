@@ -30,8 +30,10 @@ def draw_square(display=win):
 
 def flash_targets(dlist, tlist, flash):
     """function to flash targets"""
+    play_sound = False
     fixation_cross()
     if flash == True:
+        play_sound = True
         for t in tlist:
             t.color = GREEN
             t.draw_circle(win)
@@ -44,6 +46,11 @@ def flash_targets(dlist, tlist, flash):
     for d in dlist:
         d.draw_circle(win)
     pg.display.update()
+    if play_sound == True:
+        pg.mixer.music.load('MOT_audio\\countdown.mp3')
+        pg.mixer.music.play()
+        pg.time.delay(3000)
+        pg.mixer.music.unload()
     return flash
 
 
@@ -166,7 +173,14 @@ def correct_txt(selected, total):
     else:
         msg_to_screen_centered("Sorry... " + str(selected) +  " out of " + str(total) + " correct", BLACK, large_font)
     pg.display.flip()
-    pg.time.delay((feedback_time + 1) * 1000)
+                    # plays sounds
+    if selected == total:
+        pg.mixer.music.load('MOT_audio\\correct.mp3')
+    else:
+        pg.mixer.music.load('MOT_audio\\incorrect.mp3')
+    pg.mixer.music.play()
+    pg.time.delay(2000)
+    pg.mixer.music.unload()
 
 def guide_screen(call, mlist, selected_targets_list, num_targ, total):
     if call == "start":
