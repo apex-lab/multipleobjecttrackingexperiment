@@ -25,7 +25,7 @@ attributes = ["targs", "speed", "dists"]
 att_max = [3,3] 
 scale = 1
 dist_range = att_max[1] // 2
-starting_targs = 3
+starting_targs = 2
 
 # == how far player progresses or regresses based on performance ==
 success = 1
@@ -150,11 +150,9 @@ class MOTobj:
 # get initial dx and dy values for balls
 def velocity(game):
     speed = game["speed"]
-    overall_velocity = math.sqrt(2 * ((speed + 3) ** 2))
+    overall_velocity = math.sqrt(2 * ((speed + 2.75) ** 2))
     dx = random.choice([-1,1]) * random.uniform(0, overall_velocity)
     dy = random.choice([-1,1]) * math.sqrt((overall_velocity ** 2) - (dx ** 2))
-    #dx = ((1 + (0.5 * (1 - speed))) * dx)
-    #dy = ((1 + (0.5 * (1 - speed))) * dy)
     return dx, dy
 
 # == returns product over elements up to and including entry n == 

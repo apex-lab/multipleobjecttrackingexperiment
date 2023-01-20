@@ -47,10 +47,11 @@ def flash_targets(dlist, tlist, flash):
         d.draw_circle(win)
     pg.display.update()
     if play_sound == True:
-        pg.mixer.music.load('MOT_audio\\countdown.mp3')
-        pg.mixer.music.play()
-        pg.time.delay(3000)
-        pg.mixer.music.unload()
+        pass
+        #pg.mixer.music.load('MOT_audio\\countdown.mp3')
+        #pg.mixer.music.play()
+        #pg.time.delay(3000)
+        #pg.mixer.music.unload()
     return flash
 
 
