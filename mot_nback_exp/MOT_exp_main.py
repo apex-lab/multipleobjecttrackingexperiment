@@ -237,6 +237,7 @@ def welcome_messages(game, gametype, high_score):
         wait_key()
     if gametype == 'real':
         high_score_info(high_score)
+        stage_screen(game["stage"] + 1)
 
 # == plays proper end messages based on gametype ==
 def end_messages(game, gametype, recorder):
@@ -264,8 +265,8 @@ def take_a_break(gametype, tot_time):
     return False
 
 # == updates the score given current score and consecutive correct trials
-def update_score(score, consecutive):
-    return score + consecutive
+def update_score(score, consecutive, stage):
+    return score + consecutive + math.floor(stage / 2)
 
 # == function for calculating expected balls correct on a trial if user were guessing
 def expected_value(game):
@@ -316,10 +317,10 @@ def update_stage(selected_targ, game, gametype, score, consecutive):
     if len(selected_targ) == game["targs"]:
         game["stage"] += success
         consecutive += 1
-        score = update_score(score, consecutive)
+        score = update_score(score, consecutive, game["stage"])
     else:
         game["stage"] += failure
-        consecutive = 0
+        consecutive = math.floor(consecutive / 2)
         if game["stage"] < 0:
             game["stage"] = 0
     if gametype == 'real': 
@@ -527,18 +528,18 @@ def trials(game, recorder, gametype, time_or_trials, high_score): #, outlet):
                     timeup = True
 
             if submitted: # -- if the user submits answers properly
-
-                # == Records info for the trial ==
-                if gametype == 'real':
-                    hit_rates.append(len(selected_targ) / len(selected_list))
-                    dprimes = d_prime(dprimes, hit_rates, game)
-                    t_sub = ((t_keypress - t0)/1000) - animation_time
-                    record_response(t_sub, len(selected_targ), game, False, dprimes[-1], recorder)
                 
                 # == message screen stating performance on that trial ==
                 pg.mouse.set_visible(False)
                 correct_txt(len(selected_targ), len(list_t))
                 pg.mouse.set_visible(False)
+
+                                # == Records info for the trial ==
+                if gametype == 'real':
+                    hit_rates.append(len(selected_targ) / len(selected_list))
+                    dprimes = d_prime(dprimes, hit_rates, game)
+                    t_sub = ((t_keypress - t0)/1000) - animation_time
+                    record_response(t_sub, len(selected_targ), game, False, dprimes[-1], recorder)
 
                 # == Based on that performance, we update the stage and score ==
                 game, score, consecutive = update_stage(selected_targ, game, gametype, score, consecutive)
@@ -567,6 +568,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score): #, outlet):
                     count += 1
                 flash = True
                 submitted = timeup = insufficient_selections= reset = sound_played = False
+                stage_screen(game["stage"] + 1)
                 t0 = pg.time.get_ticks()
 
         else: # -- end of experiment/practice/guide
@@ -577,6 +579,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score): #, outlet):
                 return score
             else:
                 return "complete" # signifies succesful completion of prac/guide trials
+        
 
         # total gameplay time (for use in giving users a break)
         trial_time = pg.time.get_ticks() - trial_time
@@ -619,6 +622,8 @@ def main(unified):
             f.writelines(str(score) + '\n')
             f.close()
             new_high_score(score)
+        else:
+            final_score(score)
 
         # allow user to play again without rerunning program
         pg.mixer.quit()

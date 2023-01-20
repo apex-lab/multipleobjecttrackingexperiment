@@ -167,6 +167,12 @@ def message_screen(message, num_targ, total, display=win):
         multi_line_message(experim_fin_txt, large_font, ((win_width - (win_width / 10)), 150))
         pg.display.flip()
 
+def stage_screen(stage):
+    win.fill(background_col)
+    msg_to_screen_centered("Level " + str(stage), BLACK, large_font)
+    pg.display.flip()
+    pg.time.delay(1500)
+
 def correct_txt(selected, total):
     win.fill(background_col)
     if selected == total:
@@ -179,6 +185,7 @@ def correct_txt(selected, total):
         pg.mixer.music.load('MOT_audio\\correct.mp3')
     else:
         pg.mixer.music.load('MOT_audio\\incorrect.mp3')
+    pg.mixer.music.set_volume(0.22)
     pg.mixer.music.play()
     pg.time.delay(2000)
     pg.mixer.music.unload()
@@ -226,7 +233,7 @@ def score_screen(score):
     win.fill(background_col)
     msg_to_screen_centered("Score: " + str(score), BLACK, large_font)
     pg.display.flip()
-    pg.time.delay(3 * 1000)
+    pg.time.delay(1500)
 
 def is_valid(num):
     if (num >= 48 and num <= 57) or (num >= 97 and num <= 122) or (num == 46):
@@ -286,11 +293,18 @@ def new_high_score(score):
     pg.display.flip()
     pg.time.delay(5 * 1000)
 
+def final_score(score):
+    win.fill(background_col)
+    msg_to_screen_centered("Your Final score: " + str(score), BLACK, large_font)
+    pg.display.flip()
+    pg.time.delay(5 * 1000)
+
 def mot_screen():
     win.fill(background_col)
     msg_to_screen_centered("Motion Object Tracking (press F to continue)", BLACK, large_font)
     pg.display.flip()
     wait_key()
+
 #=======================================================================================
 #=======================================================================================
 #================================ NBACK MESSAGE SCREENS ================================
