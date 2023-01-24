@@ -18,7 +18,6 @@ from messagescreens import  *
 from datetime import *
 #from pylsl import StreamInfo, StreamOutlet 
 
-
 # == Game Structure Variables ==
 # == Attributes and relations between those attributes ==
 attributes = ["targs", "speed", "dists"]
@@ -374,6 +373,9 @@ def prepare_files():
         f.write("0\n")
         f.close()
 
+    audio_path = os.path.join(file_path, 'Sound')
+    
+
     # == Prepare a CSV file for trial data ==
     mot_log = date_sys + ' pcpnt_' + participant + ' obsvr_' + observer +'.csv'
     filename = os.path.join(results_path, mot_log)
@@ -382,10 +384,10 @@ def prepare_files():
     delim = ",".join(header)
     delim += "\n"
     log.write(delim)
-    return log, highscore_path, high_score, observer, participant, date_sys
+    return log, highscore_path, high_score, observer, participant, date_sys, audio_path
 
 # == Runs Real Trials (same as practice but user performance is saved) ==
-def trials(game, recorder, gametype, time_or_trials, high_score): #, outlet):
+def trials(game, recorder, gametype, time_or_trials, high_score, audio_path): #, outlet):
     tot_time = 0 # keeps track of how much time has passed
     # == Messages to user based on gametype ==
     welcome_messages(game, gametype, high_score)
@@ -531,7 +533,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score): #, outlet):
                 
                 # == message screen stating performance on that trial ==
                 pg.mouse.set_visible(False)
-                correct_txt(len(selected_targ), len(list_t))
+                correct_txt(len(selected_targ), len(list_t), audio_path)
                 pg.mouse.set_visible(False)
 
                                 # == Records info for the trial ==
@@ -568,7 +570,8 @@ def trials(game, recorder, gametype, time_or_trials, high_score): #, outlet):
                     count += 1
                 flash = True
                 submitted = timeup = insufficient_selections= reset = sound_played = False
-                stage_screen(game["stage"] + 1)
+                if gametype == 'real':
+                    stage_screen(game["stage"] + 1)
                 t0 = pg.time.get_ticks()
 
         else: # -- end of experiment/practice/guide
@@ -594,7 +597,7 @@ def main(unified):
         time = now.strftime("%H:%M:%S") # get current time
         pg.init()
         pg.mixer.init()
-        log, highscore_path, high_score, observer, participant, date_sys = prepare_files()
+        log, highscore_path, high_score, observer, participant, date_sys, audio_path = prepare_files()
     
         # prepare lab streaming layer functionality
         #info = StreamInfo('MOT_stream', 'Markers', 1, 0, 'string', '_Obs_' + observer + '_ptcpt_' + participant + '_' + date_sys + '_' + time)
@@ -605,15 +608,15 @@ def main(unified):
         game_real = update_game(0)
     
         # == Start guide ==
-        key = trials(game_guide, log, 'guide', guide_trials, high_score)#, outlet)
+        key = trials(game_guide, log, 'guide', guide_trials, high_score, audio_path)#, outlet)
 
         # == Start practice ==
         if key == 'k' or key == 'complete':
-            key = trials(game_prac, log, 'practice', prac_trials, high_score)#, outlet)
+            key = trials(game_prac, log, 'practice', prac_trials, high_score, audio_path)#, outlet)
 
         # == Start real trials, recording responses ==
         if key == 'k' or key == 'complete':
-            score = trials(game_real, log, 'real', real_time, high_score)#, outlet)
+            score = trials(game_real, log, 'real', real_time, high_score, audio_path)#, outlet)
         else:
             score = 0
     

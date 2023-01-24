@@ -173,7 +173,7 @@ def stage_screen(stage):
     pg.display.flip()
     pg.time.delay(1500)
 
-def correct_txt(selected, total):
+def correct_txt(selected, total, audio_path):
     win.fill(background_col)
     if selected == total:
         msg_to_screen_centered("Good! " + str(selected) +  " out of " + str(total) + " correct", BLACK, large_font)
@@ -182,9 +182,9 @@ def correct_txt(selected, total):
     pg.display.flip()
                     # plays sounds
     if selected == total:
-        pg.mixer.music.load('MOT_audio\\correct.mp3')
+        pg.mixer.music.load(os.path.join(audio_path,'correct.mp3'))
     else:
-        pg.mixer.music.load('MOT_audio\\incorrect.mp3')
+        pg.mixer.music.load(os.path.join(audio_path,'incorrect.mp3'))
     pg.mixer.music.set_volume(0.22)
     pg.mixer.music.play()
     pg.time.delay(2000)
