@@ -23,7 +23,6 @@ def wait_key():
             if event.type == pg.KEYDOWN and event.key == pg.K_f:
                 return
 
-
 def draw_square(display=win):
         # -- Function to draw circle onto display
         pg.draw.rect(display, WHITE, pg.Rect(win_width - 20, win_height - 20, 20,20))
@@ -54,8 +53,6 @@ def flash_targets(dlist, tlist, flash):
         #pg.mixer.music.unload()
     return flash
 
-
-
 def animate(dlist, tlist, mlist):
     """function to move or animate objects on screen"""
     #for d in dlist:
@@ -67,12 +64,10 @@ def animate(dlist, tlist, mlist):
         m.draw_circle(win)
     pg.display.update()
 
-
 def static_draw(mlist):
     """function for static object draw"""
     for obj in mlist:
         obj.draw_circle()
-
 
 def fixation_cross(color=BLACK):
     """function to draw fixation cross"""
@@ -81,7 +76,6 @@ def fixation_cross(color=BLACK):
     pg.draw.line(win, color, start_x, end_x, 3)
     pg.draw.line(win, color, start_y, end_y, 3)
 
-
 def fixation_screen(mlist):
     """function to present the fixation cross and the objects"""
     fixation_cross(BLACK)
@@ -89,13 +83,11 @@ def fixation_screen(mlist):
         obj.draw_circle()
     pg.display.update()
 
-
 def text_objects(text, color, textsize):
     """text object defining text"""
     msg = pg.font.SysFont("arial", textsize)
     text_surf = msg.render(text, True, color)
     return text_surf, text_surf.get_rect()  # - Returns the text surface and rect object
-
 
 def msg_to_screen(text, textcolor, textsize, pos, display=win):
     """function to render message to screen centered"""
@@ -103,13 +95,11 @@ def msg_to_screen(text, textcolor, textsize, pos, display=win):
     text_rect.center = pos
     display.blit(text_surface, text_rect)
 
-
 def msg_to_screen_centered(text, textcolor, textsize, display=win):
     """function to render message to screen centered"""
     text_surface, text_rect = text_objects(text, textcolor, textsize)  # - set variable for text rect object
     text_rect.center = (win_width/2), (win_height/2)
     display.blit(text_surface, text_rect)
-
 
 def multi_line_message(text, textsize, pos=((win_width-(win_width/10)), win_height), color=BLACK, display=win):
     """function to split text message to multiple lines and blit to display window."""
@@ -146,7 +136,6 @@ def multi_line_message(text, textsize, pos=((win_width-(win_width/10)), win_heig
             textsize -= 3 # if too big for display then shrink the textsize and try again
             win.fill(background_col)
     pg.display.flip()
-
 
 def message_screen(message, num_targ, total, display=win):
     if message == "start":
@@ -236,11 +225,10 @@ def score_screen(score):
     pg.time.delay(1500)
 
 def is_valid(num):
-    if (num >= 48 and num <= 57) or (num >= 97 and num <= 122) or (num == 46):
+    if (num >= 48 and num <= 57) or (num >= 97 and num <= 122) or (num == 46) or (num == 32):
         return True
     else:
         return False
-
 
 def user_info(type):
     pg.mouse.set_visible(False)

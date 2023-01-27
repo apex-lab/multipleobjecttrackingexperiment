@@ -16,6 +16,8 @@ import scipy.stats as scip
 import math
 from messagescreens import  *
 from datetime import *
+import csv
+import numpy as np
 #from pylsl import StreamInfo, StreamOutlet 
 
 # == Game Structure Variables ==
@@ -207,9 +209,9 @@ def delay(t):
     pg.time.delay((t*1000))  # multiply by a thousand because the delay function takes milliseconds
 
 # == Function for Recording User Performance ==
-def record_response(response_time, targs_identified, game, time_out_state, d_prime, log):
+def record_response(participant_number, user_number, name, response_time, targs_identified, game, time_out_state, d_prime, log):
     # record the responses
-    header_list = [response_time, targs_identified, game["targs"], game["stage"], time_out_state, d_prime]
+    header_list = [participant_number, user_number, name, response_time, targs_identified, game["targs"], game["stage"], time_out_state, d_prime]
     # convert to string
     header_str = map(str, header_list)
     # convert to a single line, separated by commas    
@@ -328,12 +330,13 @@ def update_stage(selected_targ, game, gametype, score, consecutive):
 
 # == prepares where we store data such as results and high scores ==
 def prepare_files():
+    participant_number = 1
     high_score = 0
     date_sys = str(date.today())
-    observer = user_info("Observer: ")
-    participant = user_info("Participant: ")
+    user_number = user_info("User Number: ")
+    name = user_info("Full Name (e.g. 'John Doe'): ")
 
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, 'frozen', False): 
         # The application is frozen (is an executable)
         file_path = os.path.dirname(sys.executable)
     else:
@@ -373,21 +376,31 @@ def prepare_files():
         f.write("0\n")
         f.close()
 
+    # Creating one big csv file for all user data
+    results_csv_path = os.path.join(results_path, 'results.csv')
+    if not (os.path.isfile(results_csv_path)): # if it doesn't exist, then create a file
+        log = open(results_csv_path, 'w')
+        header = ["participant number", "user number (for Lauren)", "name", "response_time","targets_identified","total_targets","stage","timed_out","d_prime"]
+        delim = ",".join(header)
+        delim += "\n"
+        log.write(delim)
+    else: # if exists, then get new participant number
+        log = open(results_csv_path, 'r') 
+        i = 0
+        for row in csv.reader(log): # grabs last participant number (last line, first entry)
+            if i == 0:
+                pass
+            else:
+                participant_number = int(row[0])
+            i += 1
+        participant_number += 1 # get the very next participant number
+    log.close()
+    log = open(results_csv_path, 'a')
     audio_path = os.path.join(file_path, 'Sound')
-    
-
-    # == Prepare a CSV file for trial data ==
-    mot_log = date_sys + ' pcpnt_' + participant + ' obsvr_' + observer +'.csv'
-    filename = os.path.join(results_path, mot_log)
-    log = open(filename, 'w')
-    header = ["response_time","targets_identified","total_targets","stage","timed_out","d_prime"]
-    delim = ",".join(header)
-    delim += "\n"
-    log.write(delim)
-    return log, highscore_path, high_score, observer, participant, date_sys, audio_path
+    return log, highscore_path, high_score, user_number, name, date_sys, audio_path, participant_number, results_path
 
 # == Runs Real Trials (same as practice but user performance is saved) ==
-def trials(game, recorder, gametype, time_or_trials, high_score, audio_path): #, outlet):
+def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, participant_number, user_number, name): #, outlet):
     tot_time = 0 # keeps track of how much time has passed
     # == Messages to user based on gametype ==
     welcome_messages(game, gametype, high_score)
@@ -401,6 +414,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path): #,
     flash = True
     reset = False
     submitted = False
+    highest_level = 0
     sound_played = False
     insufficient_selections = False # whole lot of initiating variables in this area
     timeup = False
@@ -432,7 +446,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path): #,
                 if event.key == pg.K_ESCAPE: # what is going on here
                     if gametype == 'real':
                         #outlet.push_sample(['esc'])
-                        return score
+                        return score, dprimes, (game["stage"] + 1), (highest_level + 1)
                     else:
                         return 'esc'
                 if event.key == pg.K_SPACE:
@@ -541,10 +555,12 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path): #,
                     hit_rates.append(len(selected_targ) / len(selected_list))
                     dprimes = d_prime(dprimes, hit_rates, game)
                     t_sub = ((t_keypress - t0)/1000) - animation_time
-                    record_response(t_sub, len(selected_targ), game, False, dprimes[-1], recorder)
+                    record_response(participant_number, user_number, name, t_sub, len(selected_targ), game, False, dprimes[-1], recorder)
 
                 # == Based on that performance, we update the stage and score ==
                 game, score, consecutive = update_stage(selected_targ, game, gametype, score, consecutive)
+                if game["stage"] > highest_level:
+                    highest_level = game["stage"]
                 reset = True
 
             if timeup: # -- if the user runs out of time
@@ -579,7 +595,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path): #,
             end_messages(game, gametype, recorder)
             if gametype == 'real':
                 recorder.close()
-                return score
+                return score, dprimes, (game["stage"] + 1), (highest_level + 1)
             else:
                 return "complete" # signifies succesful completion of prac/guide trials
         
@@ -597,7 +613,7 @@ def main(unified):
         time = now.strftime("%H:%M:%S") # get current time
         pg.init()
         pg.mixer.init()
-        log, highscore_path, high_score, observer, participant, date_sys, audio_path = prepare_files()
+        log, highscore_path, high_score, user_number, name, date_sys, audio_path, participant_number, results_path = prepare_files()
     
         # prepare lab streaming layer functionality
         #info = StreamInfo('MOT_stream', 'Markers', 1, 0, 'string', '_Obs_' + observer + '_ptcpt_' + participant + '_' + date_sys + '_' + time)
@@ -608,15 +624,15 @@ def main(unified):
         game_real = update_game(0)
     
         # == Start guide ==
-        key = trials(game_guide, log, 'guide', guide_trials, high_score, audio_path)#, outlet)
+        key = trials(game_guide, log, 'guide', guide_trials, high_score, audio_path, participant_number, user_number, name)#, outlet)
 
         # == Start practice ==
         if key == 'k' or key == 'complete':
-            key = trials(game_prac, log, 'practice', prac_trials, high_score, audio_path)#, outlet)
+            key = trials(game_prac, log, 'practice', prac_trials, high_score, audio_path, participant_number, user_number, name)#, outlet)
 
         # == Start real trials, recording responses ==
         if key == 'k' or key == 'complete':
-            score = trials(game_real, log, 'real', real_time, high_score, audio_path)#, outlet)
+            score, dprimes, last_level, highest_level = trials(game_real, log, 'real', real_time, high_score, audio_path, participant_number, user_number, name)#, outlet)
         else:
             score = 0
     
@@ -627,6 +643,29 @@ def main(unified):
             new_high_score(score)
         else:
             final_score(score)
+
+        summary_csv_path = os.path.join(results_path, 'summary.csv')
+        if not (os.path.isfile(summary_csv_path)): # if it doesn't exist, then create a file
+            f = open(summary_csv_path, 'w')
+            header = ["participant number", "user number (for Lauren)", "name", "avg dprime", "std of dprime", "highest level obtained", "last level", "score"]
+            delim = ",".join(header)
+            delim += "\n"
+            f.write(delim)
+            f.close()
+        f = open(summary_csv_path, 'a')
+            # record the responses
+        header_list = [participant_number, user_number, name, np.mean(dprimes), np.std(dprimes), highest_level, last_level, score]
+        # convert to string
+        header_str = map(str, header_list)
+        # convert to a single line, separated by commas    
+        header_line = ','.join(header_str)
+        header_line += '\n'
+        f.write(header_line)
+        f.close()
+
+
+
+
 
         # allow user to play again without rerunning program
         pg.mixer.quit()
