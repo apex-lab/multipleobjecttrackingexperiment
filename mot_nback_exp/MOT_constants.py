@@ -50,7 +50,6 @@ def start_text(num_targ, total):
     " flashed circles.\n\nWhen the circles stop moving, select which circles you've been tracking by clicking " \
     "them.\nWhen you have made your selection, press the SPACEBAR to submit your selection.\n\n" \
     "Press F to start when you are ready.\n\nIf you need to stop, let the experimenter know or press ESCAPE if you are in the middle of a trial. "\
-    "Furthermore, you may press \"k\" to skip through the guide or practice once the balls have been displayed."
 
 def start_text_nback():
     return "Welcome to the n-back task. \n\n" \
@@ -89,7 +88,7 @@ prac_finished_txt = "The practice is now over.\n\nPress the F when you are ready
 experim_fin_txt = "The experiment is now over; let the experimenter know.\n\nThank you for participating!" \
                   "\n\nPress F to exit."
 
-guide_fin_txt = "The guide is now complete, and will move to practice rounds, where you will go through the " \
+guide_fin_txt = "The guide is now complete, and you will move to practice rounds, where you will go through the " \
                 "experiment in normal order, but your answers will not be recorded.\n\nAfter the practice is finished, " \
                 "you will move to the real experiments where your responses will be recorded.\n\n" \
                 "Press F to move to the practice rounds."
@@ -100,6 +99,11 @@ guide_fin_txt_nback = "The guide is now complete.\n\n" \
 guide_submit_txt = "You've selected {:d} targets correctly."
 
 guide_timeup_txt = "Time is up! You will now repeat the trial."
+
+def high_scores_info_txt(high_scores):
+    return "Current High Scores \n\n 1. " + str(high_scores[0]) + "\n\n 2. " + str(high_scores[1]) + "\n\n 3. " \
+         + str(high_scores[2]) + "\n\n 4. " + str(high_scores[3]) + "\n\n 5. " + str(high_scores[4])
+
 
 def stage_txt(game):
         return " Stage " + str(game["stage"]) 

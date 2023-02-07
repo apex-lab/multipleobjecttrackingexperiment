@@ -269,15 +269,15 @@ def play_again_exp():
             return False
         response = user_info("Play again? (type \'y\' for yes or \'n\' for no): ")
 
-def high_score_info(high_score):
+def high_score_info(high_scores):
     win.fill(background_col)
-    msg_to_screen_centered("Current High Score: " + str(high_score), BLACK, large_font)
+    multi_line_message(high_scores_info_txt(high_scores), large_font, ((win_width - (win_width / 10)), 40))
     pg.display.flip()
-    pg.time.delay(3 * 1000)
+    pg.time.delay(5 * 1000)
 
-def new_high_score(score):
+def new_high_score(score, i):
     win.fill(background_col)
-    msg_to_screen_centered("New High Score! Your score: " + str(score), GREEN, large_font)
+    msg_to_screen_centered("New High Score! You are now #" + str(i) + "! Your score: " + str(score), GREEN, large_font)
     pg.display.flip()
     pg.time.delay(5 * 1000)
 
@@ -292,6 +292,41 @@ def mot_screen():
     msg_to_screen_centered("Motion Object Tracking (press F to continue)", BLACK, large_font)
     pg.display.flip()
     wait_key()
+
+def consent_screens():
+    page = 1
+    consented = False
+    proceed = False
+    while consented == False:
+        win.fill(background_col)
+        for event in pg.event.get():
+            if proceed == True:
+                if event.key == pg.K_RIGHT:
+                    page = page + 1
+            if event.key == pg.K_LEFT:
+                page = page - 1
+        if page <= 1:
+            page = 1
+            multi_line_message("This is a consent form message", large_font, ((win_width - (win_width / 10)), 40))
+        elif page == 2:
+            multi_line_message("General info/Purpose text", large_font, ((win_width - (win_width / 10)), 40))
+        elif page == 3:
+            multi_line_message("Procedures and time required", large_font, ((win_width - (win_width / 10)), 40))
+        elif page == 4:
+            multi_line_message("Additional procedures info", large_font, ((win_width - (win_width / 10)), 40))
+        elif page == 5:
+            multi_line_message("Financial info", large_font, ((win_width - (win_width / 10)), 40))
+        elif page == 6:
+            multi_line_message("Risks and Benefits", large_font, ((win_width - (win_width / 10)), 40))
+        elif page == 7:
+            multi_line_message("Confidentiality", large_font, ((win_width - (win_width / 10)), 40))
+        elif page == 8:
+            multi_line_message("Contacts & questions", large_font, ((win_width - (win_width / 10)), 40))
+        else:
+            page = 9
+            multi_line_message("Consent", large_font, ((win_width - (win_width / 10)), 40))
+        pg.mouse.set_visible(False)
+        pg.display.flip()
 
 #=======================================================================================
 #=======================================================================================

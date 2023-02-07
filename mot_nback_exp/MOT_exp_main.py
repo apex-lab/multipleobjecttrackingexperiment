@@ -33,7 +33,7 @@ success = 1
 failure = -3
 
 # == Trial variables ==
-real_time = 3.6 * (10 ** 6) # time that real trials last (milliseconds)
+real_time = 1.2 * (10 ** 6) # time that real trials last (milliseconds)
 prac_trials = 2 # number of practice trials
 guide_trials = 1 # number of guide trials
 
@@ -49,8 +49,14 @@ class MOTobj:
         # -- Object positions attributes
         self.x, self.y = choice([n for n in range(int(boundary["left"]), int(boundary["right"]))
                                  if n not in range(x - self.radius, x + self.radius)]), \
-                         choice([n for n in range(int(boundary["up"]), int(boundary["down"]))
+                        choice([n for n in range(int(boundary["up"]), int(boundary["down"]))
                                  if n not in range(y - self.radius, y + self.radius)])
+
+        #while (self.x > (boundary["right"] - 20 - self.radius)) and (self.y < (boundary["down"] + 20 + self.radius)):
+        #    self.x, self.y = choice([n for n in range(int(boundary["left"]), int(boundary["right"]))
+        #                         if n not in range(x - self.radius, x + self.radius)]), \
+        #                choice([n for n in range(int(boundary["up"]), int(boundary["down"]))
+        #                         if n not in range(y - self.radius, y + self.radius)])    
         
         # -- Velocity initialization
         self.dx, self.dy = velocity(game)
@@ -141,13 +147,33 @@ class MOTobj:
             else:
                 self.color = GREEN
 
-    def shuffle_position(self):
-        """Shuffle the position of circles"""
+# NEW NEW NEW randomly shuffles positions of balls
+def shuffle_positions(mlist):
+    """Shuffle the position of circles"""
+    for self in mlist:
         self.x = choice([n for n in range(int(boundary["left"]), int(boundary["right"]))
                          if n not in range(x - self.radius, x + self.radius)])
         self.y = choice([n for n in range(int(boundary["up"]), int(boundary["down"]))
                          if n not in range(y - self.radius, y + self.radius)])
 
+# NEW NEW NEW checks that balls do not spawn in corner or overlap, fixes problem if it occurs
+def valid_positions(mlist):
+    truth_list = []
+    valid_positions = False 
+    while (valid_positions == False):
+        for m in mlist: # iterate over all balls 
+            if (m.x > (boundary["right"] - 25 - m.radius)) and (m.y < (boundary["down"] + 25 + m.radius)):
+                truth_list.append(0) # if located in corner with square then invalid
+            for k in mlist:
+                distance = math.sqrt(((m.x - k.x) ** 2) + ((m.y - k.y) ** 2))
+                if distance < 2 * m.radius and distance != 0:
+                    truth_list.append(0) # if overlapping with another ball then invalid
+        if truth_list == []: # if every ball satisfies our condition then we are fine 
+            valid_positions = True
+        else: #otherwise we shuffle the balls and start again
+            shuffle_positions(mlist)
+        truth_list = []
+    
 # get initial dx and dy values for balls
 def velocity(game):
     speed = game["speed"]
@@ -201,6 +227,8 @@ def generate_list(game, color):
     for nd in range(num_dist):
         d = MOTobj(game, color)
         distractor_list.append(d)
+    mlist = distractor_list + target_list # NEW NEw NEW 
+    valid_positions(mlist) # NEW NEW NEW after balls for trial generated we make sure they occupy valid positions 
     return distractor_list, target_list
 
 # == Helper Function for Delaying Game by t seconds ==
@@ -209,9 +237,9 @@ def delay(t):
     pg.time.delay((t*1000))  # multiply by a thousand because the delay function takes milliseconds
 
 # == Function for Recording User Performance ==
-def record_response(participant_number, user_number, name, response_time, targs_identified, game, time_out_state, d_prime, log):
+def record_response(participant_number, user_number, name, response_time, targs_identified, game, time_out_state, d_prime, total_time, log):
     # record the responses
-    header_list = [participant_number, user_number, name, response_time, targs_identified, game["targs"], game["stage"], time_out_state, d_prime]
+    header_list = [participant_number, user_number, name, response_time, targs_identified, game["targs"], game["stage"], time_out_state, d_prime, total_time]
     # convert to string
     header_str = map(str, header_list)
     # convert to a single line, separated by commas    
@@ -331,10 +359,10 @@ def update_stage(selected_targ, game, gametype, score, consecutive):
 # == prepares where we store data such as results and high scores ==
 def prepare_files():
     participant_number = 1
-    high_score = 0
+    high_score = [0] * 5 # get top 5 high scores
     date_sys = str(date.today())
     user_number = user_info("User Number: ")
-    name = user_info("Full Name (e.g. 'John Doe'): ")
+    name = user_info("Full Name (Please enter your name exactly [e.g. 'John Doe']): ").lower()
 
     if getattr(sys, 'frozen', False): 
         # The application is frozen (is an executable)
@@ -365,7 +393,9 @@ def prepare_files():
                 if i == 0:
                     pass
                 else:
-                    high_score = int(line)
+                    if int(line) > high_score[4]:
+                        high_score.append(int(line))
+                        high_score.sort(reverse=True) 
                 i += 1
             f.close()
     else: # if no directory exists then create one and a highscore file
@@ -380,7 +410,7 @@ def prepare_files():
     results_csv_path = os.path.join(results_path, 'results.csv')
     if not (os.path.isfile(results_csv_path)): # if it doesn't exist, then create a file
         log = open(results_csv_path, 'w')
-        header = ["participant number", "user number (for Lauren)", "name", "response_time","targets_identified","total_targets","stage","timed_out","d_prime"]
+        header = ["participant number", "user number (for Lauren)", "name", "response_time","targets_identified","total_targets","stage","timed_out","d_prime", "total_time"]
         delim = ",".join(header)
         delim += "\n"
         log.write(delim)
@@ -419,7 +449,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
     insufficient_selections = False # whole lot of initiating variables in this area
     timeup = False
     score = consecutive = 0 # initializes score and consecutive correct trials
-    t0 = pg.time.get_ticks()
+    t0 = total_time = start_time = pg.time.get_ticks()
 
     # == Controls the "game" part of the game ==
     while True:
@@ -544,7 +574,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                     timeup = True
 
             if submitted: # -- if the user submits answers properly
-                
+                total_time = (pg.time.get_ticks() - start_time) / 1000
                 # == message screen stating performance on that trial ==
                 pg.mouse.set_visible(False)
                 correct_txt(len(selected_targ), len(list_t), audio_path)
@@ -555,7 +585,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                     hit_rates.append(len(selected_targ) / len(selected_list))
                     dprimes = d_prime(dprimes, hit_rates, game)
                     t_sub = ((t_keypress - t0)/1000) - animation_time
-                    record_response(participant_number, user_number, name, t_sub, len(selected_targ), game, False, dprimes[-1], recorder)
+                    record_response(participant_number, user_number, name, t_sub, len(selected_targ), game, False, dprimes[-1], total_time, recorder)
 
                 # == Based on that performance, we update the stage and score ==
                 game, score, consecutive = update_stage(selected_targ, game, gametype, score, consecutive)
@@ -564,9 +594,10 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 reset = True
 
             if timeup: # -- if the user runs out of time
+                total_time = (pg.time.get_ticks() - start_time) / 1000
                 pg.mouse.set_visible(False)
                 if gametype == 'real':
-                    record_response("timed out", "NA", game, True, "NA", recorder)
+                    record_response(participant_number, user_number, name, "timed out", "NA", game, True, "NA", total_time, recorder)
                 message_screen("timeup", num_targs, num_targs + game["dists"])
                 delay(feedback_time)
                 count -= 1
@@ -609,6 +640,7 @@ def main(unified):
     mot_play_again = True
     while mot_play_again == True:
         # == Initiate pygame and collect user information ==
+        #consent_screens()
         now = datetime.now()
         time = now.strftime("%H:%M:%S") # get current time
         pg.init()
@@ -636,25 +668,33 @@ def main(unified):
         else:
             score = 0
     
-        if score > high_score: # update high score if applicable
+        if score > high_score[4]: # update high score if applicable  
+            i = 4
+            while (score > high_score[i]) and (i >= 0): # calculate where on the highscore list it goes
+                i = i - 1
+            i += 2 # do this because we index from zero
+
             f = open(os.path.join(highscore_path,'highscores.csv'), 'a')
             f.writelines(str(score) + '\n')
             f.close()
-            new_high_score(score)
+            new_high_score(score, i)
         else:
             final_score(score)
 
         summary_csv_path = os.path.join(results_path, 'summary.csv')
         if not (os.path.isfile(summary_csv_path)): # if it doesn't exist, then create a file
             f = open(summary_csv_path, 'w')
-            header = ["participant number", "user number (for Lauren)", "name", "avg dprime", "std of dprime", "highest level obtained", "last level", "score"]
+            header = ["participant number", " user_number (for Lauren)", " name", " dprime_avg", " dprime_std", " highest_level_obtained", " last_level", " score"]
             delim = ",".join(header)
             delim += "\n"
             f.write(delim)
             f.close()
         f = open(summary_csv_path, 'a')
             # record the responses
-        header_list = [participant_number, user_number, name, np.mean(dprimes), np.std(dprimes), highest_level, last_level, score]
+        try:
+            header_list = [participant_number, user_number, name, np.nanmean(dprimes), np.nanstd(dprimes), highest_level, last_level, score]
+        except:
+            header_list = [participant_number, user_number, name, "NaN", "NaN", "NaN", "NaN", "NaN"]
         # convert to string
         header_str = map(str, header_list)
         # convert to a single line, separated by commas    
