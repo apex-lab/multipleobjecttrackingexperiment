@@ -293,6 +293,7 @@ def mot_screen():
     pg.display.flip()
     wait_key()
 
+# deprecated... turns out that we do not need it
 def consent_screens():
     page = 1
     consented = False

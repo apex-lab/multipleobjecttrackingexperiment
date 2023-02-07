@@ -18,6 +18,10 @@ from messagescreens import  *
 from datetime import *
 import csv
 import numpy as np
+import warnings
+
+warnings.filterwarnings("ignore") #ignore warnings
+
 #from pylsl import StreamInfo, StreamOutlet 
 
 # == Game Structure Variables ==
@@ -239,7 +243,7 @@ def delay(t):
 # == Function for Recording User Performance ==
 def record_response(participant_number, user_number, name, response_time, targs_identified, game, time_out_state, d_prime, total_time, log):
     # record the responses
-    header_list = [participant_number, user_number, name, response_time, targs_identified, game["targs"], game["stage"], time_out_state, d_prime, total_time]
+    header_list = [participant_number, user_number, name, response_time, targs_identified, game["targs"], game["stage"] + 1, time_out_state, d_prime, total_time]
     # convert to string
     header_str = map(str, header_list)
     # convert to a single line, separated by commas    
@@ -389,7 +393,7 @@ def prepare_files():
     except: # if it does exist, then grab the high score
         with open(os.path.join(highscore_path,'highscores.csv')) as f:
             i = 0
-            for line in f: # grabs highscore (last line in highscore file)
+            for line in f: # grabs top 5 high scores 
                 if i == 0:
                     pass
                 else:
@@ -410,7 +414,7 @@ def prepare_files():
     results_csv_path = os.path.join(results_path, 'results.csv')
     if not (os.path.isfile(results_csv_path)): # if it doesn't exist, then create a file
         log = open(results_csv_path, 'w')
-        header = ["participant number", "user number (for Lauren)", "name", "response_time","targets_identified","total_targets","stage","timed_out","d_prime", "total_time"]
+        header = ["participant number", " user number (for Lauren)", " name", " response_time"," targets_identified"," total_targets"," level"," timed_out"," d_prime", " total_time"]
         delim = ",".join(header)
         delim += "\n"
         log.write(delim)
@@ -702,10 +706,6 @@ def main(unified):
         header_line += '\n'
         f.write(header_line)
         f.close()
-
-
-
-
 
         # allow user to play again without rerunning program
         pg.mixer.quit()
