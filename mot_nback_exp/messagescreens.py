@@ -97,9 +97,15 @@ def msg_to_screen(text, textcolor, textsize, pos, display=win):
 
 def msg_to_screen_centered(text, textcolor, textsize, display=win):
     """function to render message to screen centered"""
+    too_big = True
+    text_x = 0
+    max_w = win_width-(win_width/10)
+    #while too_big == True:
     text_surface, text_rect = text_objects(text, textcolor, textsize)  # - set variable for text rect object
     text_rect.center = (win_width/2), (win_height/2)
     display.blit(text_surface, text_rect)
+        #if text_x <= max_w:
+         #   too_big = False
 
 def multi_line_message(text, textsize, pos=((win_width-(win_width/10)), win_height), color=BLACK, display=win):
     """function to split text message to multiple lines and blit to display window."""
@@ -107,6 +113,7 @@ def multi_line_message(text, textsize, pos=((win_width-(win_width/10)), win_heig
     #font = pg.font.SysFont("arial", textsize)
     #words = [word.split(" ") for word in text.splitlines()]
     too_big = True 
+    final_text_x = 0
 
     # -- Get the width required to render an empty space
     #space_w = font.size(" ")[0]  # .size method returns dimension in width and height. [0] gets the width
@@ -128,9 +135,10 @@ def multi_line_message(text, textsize, pos=((win_width-(win_width/10)), win_heig
                     text_y += word_h  # start a new row
                 display.blit(word_surface, (text_x, text_y))  # blit the text onto surface according to pos
                 text_x += word_w + space_w  # force a space between each word
+            final_text_x = text_x
             text_x = (win_width/10)  # reset the x
             text_y += word_h  # start a new row
-        if text_y <= win_height - 15:
+        if text_y <= win_height - 20:
             too_big = False
         else: 
             textsize -= 3 # if too big for display then shrink the textsize and try again
@@ -277,7 +285,7 @@ def high_score_info(high_scores):
 
 def new_high_score(score, i):
     win.fill(background_col)
-    msg_to_screen_centered("New High Score! You are now #" + str(i) + "! Your score: " + str(score), GREEN, large_font)
+    msg_to_screen_centered("New High Score! You are now #" + str(i) + "! Your score: " + str(score), GREEN, med_font + 10)
     pg.display.flip()
     pg.time.delay(5 * 1000)
 

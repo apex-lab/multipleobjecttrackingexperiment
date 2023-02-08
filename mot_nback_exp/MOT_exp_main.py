@@ -37,7 +37,7 @@ success = 1
 failure = -3
 
 # == Trial variables ==
-real_time = 1.2 * (10 ** 6) # time that real trials last (milliseconds)
+real_time = 0.3 * (10 ** 6) #1.2 * (10 ** 6) # time that real trials last (milliseconds)
 prac_trials = 2 # number of practice trials
 guide_trials = 1 # number of guide trials
 
@@ -593,8 +593,8 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
 
                 # == Based on that performance, we update the stage and score ==
                 game, score, consecutive = update_stage(selected_targ, game, gametype, score, consecutive)
-                if game["stage"] > highest_level:
-                    highest_level = game["stage"]
+                if game["stage"] + 1 > highest_level:
+                    highest_level = game["stage"] + 1
                 reset = True
 
             if timeup: # -- if the user runs out of time
@@ -608,6 +608,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 reset = True
 
             if reset: # -- prepare for the next trial
+            
                 pg.mouse.set_visible(False)
                 # gives user break after certain amount of time
                 if take_a_break(gametype, tot_time):
@@ -619,6 +620,8 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 list_m = list_d + list_t
                 if gametype != 'real':
                     count += 1
+                else:
+                    count = total_time * 1000
                 flash = True
                 submitted = timeup = insufficient_selections= reset = sound_played = False
                 if gametype == 'real':
@@ -630,7 +633,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
             end_messages(game, gametype, recorder)
             if gametype == 'real':
                 recorder.close()
-                return score, dprimes, (game["stage"] + 1), (highest_level + 1)
+                return score, dprimes, (game["stage"] + 1), highest_level
             else:
                 return "complete" # signifies succesful completion of prac/guide trials
         
