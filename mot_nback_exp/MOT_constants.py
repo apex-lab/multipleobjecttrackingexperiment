@@ -3,7 +3,6 @@ from random import randint, choice
 import time 
 from screeninfo import get_monitors
 
-
 # == Path For Storing Trial Results. ==
 save_path = 'C:\\Users\\Administrator\\psychexperiment\\multiple-object-tracking-paradigm\\results\\'
 print()
@@ -138,8 +137,9 @@ RED = [255, 50, 50]
 """
 Generate random x and y coordinates within the window boundary
 """
+boundary_size: int = 21 # how large the boundary is
 boundary_location = ['up', 'down', 'left', 'right']
-boundary_coord = [obj_radius, (win_height - obj_radius + 1), obj_radius, (win_width - obj_radius + 1)]
+boundary_coord = [obj_radius + boundary_size, (win_height - (obj_radius + boundary_size)), obj_radius + boundary_size, (win_width - (obj_radius + boundary_size))]
 boundary = dict(zip(boundary_location, boundary_coord))
 
 listX, listY = [], []

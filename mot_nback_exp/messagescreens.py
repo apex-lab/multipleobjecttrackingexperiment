@@ -15,6 +15,13 @@ hover_col = DARKSLATEGREY
 click_col = GREENYELLOW
 select_col = YELLOW
 
+def draw_boundaries(display=win):
+    #pg.draw.rect(display, BLACK, pg.Rect(win_width - boundary_size, 0, boundary_size, win_height - boundary_size)) # right
+    pg.draw.rect(display, BLACK, pg.Rect(win_width - boundary_size, 0, boundary_size, win_height)) # right
+    pg.draw.rect(display, BLACK, pg.Rect(0, 0, boundary_size, win_height)) # left
+    pg.draw.rect(display, BLACK, pg.Rect(0, 0, win_width, boundary_size)) # top
+    pg.draw.rect(display, BLACK, pg.Rect(0, win_height - boundary_size, win_width, boundary_size)) # bottom
+    #pg.display.flip()
 
 def wait_key():
     """function to wait key press"""
