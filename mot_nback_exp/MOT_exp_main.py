@@ -496,22 +496,23 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
         # == Controls responses to user input ===
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                LSL_push(outlet, 'quit')
+                #LSL_push(outlet, 'quit')
                 pg.quit()
                 sys.exit()
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_k and (gametype == 'guide' or gametype == 'practice'):
-                    LSL_push(outlet,'skip')
+                    #LSL_push(outlet,'skip')
                     return 'k'
                 if event.key == pg.K_ESCAPE: # what is going on here
                     if gametype == 'real':
-                        LSL_push(outlet, 'esc/quit')
+                        #LSL_push(outlet, 'esc/quit')
                         return score, dprimes, (game["stage"] + 1), (highest_level + 1)
                     else:
                         return 'esc'
                 if event.key == pg.K_SPACE:
                     if gametype == 'real':    
-                        LSL_push(outlet, 'space/submit')
+                        #LSL_push(outlet, 'space/submit')
+                        pass
                     if not reset:
                         for target in list_t:
                             if target.isSelected and not target.isClicked:
@@ -532,15 +533,16 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                             obj.state_control("hovered")
                     if event.type == pg.MOUSEBUTTONDOWN:
                         if gametype == 'real':    
-                            LSL_push(outlet, 'click_obj')
+                            #LSL_push(outlet, 'click_obj')
+                            pass
                         if not obj.isClicked and not obj.isSelected:
                             obj.state_control("clicked")
                         if not obj.isClicked and obj.isSelected:
-                            LSL_push(outlet, 'unclick_obj')
+                            #LSL_push(outlet, 'unclick_obj')
                             obj.state_control("neutral")
                     if event.type == pg.MOUSEBUTTONUP:
                         if obj.isClicked and not obj.isSelected:
-                            LSL_push(outlet, 'select_obj')
+                            #LSL_push(outlet, 'select_obj')
                             obj.state_control("selected")
                 elif not obj.in_circle(mx, my):
                     if event.type == pg.MOUSEMOTION:
@@ -559,7 +561,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 draw_boundaries()
                 if dt <= Tfix + 1:
                     if fix_start_record == False and gametype == 'real': # record start of fixation screen
-                        LSL_push(outlet, 'fix_start')
+                        #LSL_push(outlet, 'fix_start')
                         fix_start_record = True
 
                     for targ in list_m: # hovering does not change color
@@ -569,10 +571,10 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 elif Tfix + 1 < dt <= Tfl + 1.95:
 
                     if fix_stop_record == False and gametype == 'real': # record end of fixation screen
-                        LSL_push(outlet, 'fix_stop')
+                        #LSL_push(outlet, 'fix_stop')
                         fix_stop_record = True
                     if flash_start_record == False and gametype == 'real': # record start of flash screen
-                        LSL_push(outlet, 'flash_start')
+                        #LSL_push(outlet, 'flash_start')
                         flash_start_record = True
 
                     for targ in list_m: # hovering does not change color
@@ -590,10 +592,10 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 elif Tfl + 2 < dt <= Tani + 2:
                     #pushed_flash_already = False
                     if flash_stop_record == False and gametype == 'real': # record end of balls flashing
-                        LSL_push(outlet, 'flash_stop')
+                        #LSL_push(outlet, 'flash_stop')
                         flash_stop_record = True
                     if mvmt_start_record == False and gametype == 'real': # record start of balls moving
-                        LSL_push(outlet, 'mvmt_start')
+                        #LSL_push(outlet, 'mvmt_start')
                         mvmt_start_record = True
 
                     for targ in list_m: # hovering does not change color
@@ -601,10 +603,10 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                     animate(list_d, list_t, list_m)
                 elif Tani + 2 < dt <= Tans+ 2:
                     if mvmt_stop_record == False and gametype == 'real': # record movement stopping
-                        LSL_push(outlet, 'mvmt_stop')
+                        #LSL_push(outlet, 'mvmt_stop')
                         mvmt_stop_record = False 
                     if select_start_record == False and gametype == 'real': #record select time start
-                        LSL_push(outlet, 'select_start')
+                        #LSL_push(outlet, 'select_start')
                         select_start_record = True
 
                     if Tani + 2 < dt <= Tani + 2.05: # reset mouse position
@@ -624,9 +626,11 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
             if submitted: # -- if the user submits answers properly
                 if select_stop_record == False and gametype == 'real':
                     if len(selected_list) == len(selected_targ):
-                        LSL_push(outlet, 'submitted_correct')
+                        #LSL_push(outlet, 'submitted_correct')
+                        pass
                     else:
-                        LSL_push(outlet, 'submitted_incorrect')
+                        #LSL_push(outlet, 'submitted_incorrect')
+                        pass
                     select_stop_record = True
                 total_time = (pg.time.get_ticks() - start_time) / 1000
                 # == message screen stating performance on that trial ==
@@ -649,7 +653,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
 
             if timeup: # -- if the user runs out of time
                 if select_stop_record == False and gametype == 'real':
-                    LSL_push(outlet, 'timeup')
+                    #LSL_push(outlet, 'timeup')
                     select_stop_record = True
                 total_time = (pg.time.get_ticks() - start_time) / 1000
                 pg.mouse.set_visible(False)
@@ -662,7 +666,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
 
             if reset: # -- prepare for the next trial
                 if inter_round_record_start == False and gametype == 'real':
-                    LSL_push(outlet, 'inter_round_start')
+                    #LSL_push(outlet, 'inter_round_start')
                     inter_round_record_start = True
 
                 pg.mouse.set_visible(False)
@@ -684,7 +688,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                     stage_screen(game["stage"] + 1)
                 t0 = pg.time.get_ticks()
                 if inter_round_record_stop == False:
-                    LSL_push(outlet, 'inter_round_stop')
+                    #LSL_push(outlet, 'inter_round_stop')
                     inter_round_record_stop = True
                 
                 # resets time signature variables for next round
@@ -705,7 +709,8 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 
         else: # -- end of experiment/practice/guide
             if gametype == 'real':
-                LSL_push(outlet, 'real_trials_stop')
+                #LSL_push(outlet, 'real_trials_stop')
+                pass
             pg.mouse.set_visible(False)
             end_messages(game, gametype, recorder)
             if gametype == 'real':
@@ -746,7 +751,7 @@ def main(unified):
 
         # == Start real trials, recording responses ==
         if key == 'k' or key == 'complete':
-            LSL_push(outlet, 'real_trials_start')
+            #LSL_push(outlet, 'real_trials_start')
             score, dprimes, last_level, highest_level = trials(game_real, log, 'real', real_time, high_score, audio_path, participant_number, user_number, name, outlet)
         else:
             score = 0

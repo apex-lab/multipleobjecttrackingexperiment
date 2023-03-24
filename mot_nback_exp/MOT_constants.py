@@ -137,7 +137,7 @@ RED = [255, 50, 50]
 """
 Generate random x and y coordinates within the window boundary
 """
-boundary_size: int = 21 # how large the boundary is
+boundary_size: int = 30 # how large the boundary is
 boundary_location = ['up', 'down', 'left', 'right']
 boundary_coord = [obj_radius + boundary_size, (win_height - (obj_radius + boundary_size)), obj_radius + boundary_size, (win_width - (obj_radius + boundary_size))]
 boundary = dict(zip(boundary_location, boundary_coord))

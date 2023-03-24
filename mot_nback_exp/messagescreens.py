@@ -32,7 +32,7 @@ def wait_key():
 
 def draw_square(display=win):
         # -- Function to draw circle onto display
-        pg.draw.rect(display, WHITE, pg.Rect(win_width - 20, win_height - 20, 20,20))
+        pg.draw.rect(display, WHITE, pg.Rect(0, win_height - 20, 20,20))
 
 def flash_targets(dlist, tlist, flash):
     """function to flash targets"""
@@ -100,6 +100,7 @@ def msg_to_screen(text, textcolor, textsize, pos, display=win):
     """function to render message to screen centered"""
     text_surface, text_rect = text_objects(text, textcolor, textsize)  # - set variable for text rect object
     text_rect.center = pos
+    draw_boundaries()
     display.blit(text_surface, text_rect)
 
 def msg_to_screen_centered(text, textcolor, textsize, display=win):
@@ -110,6 +111,7 @@ def msg_to_screen_centered(text, textcolor, textsize, display=win):
     #while too_big == True:
     text_surface, text_rect = text_objects(text, textcolor, textsize)  # - set variable for text rect object
     text_rect.center = (win_width/2), (win_height/2)
+    draw_boundaries()
     display.blit(text_surface, text_rect)
         #if text_x <= max_w:
          #   too_big = False
@@ -145,11 +147,12 @@ def multi_line_message(text, textsize, pos=((win_width-(win_width/10)), win_heig
             final_text_x = text_x
             text_x = (win_width/10)  # reset the x
             text_y += word_h  # start a new row
-        if text_y <= win_height - 20:
+        if text_y <= win_height - boundary_size - 20:
             too_big = False
         else: 
             textsize -= 3 # if too big for display then shrink the textsize and try again
             win.fill(background_col)
+        draw_boundaries()
     pg.display.flip()
 
 def message_screen(message, num_targ, total, display=win):
