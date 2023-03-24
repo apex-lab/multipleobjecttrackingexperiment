@@ -23,7 +23,7 @@ from datetime import *
 import csv
 import numpy as np
 import warnings
-import pylsl
+#import pylsl
 
 warnings.filterwarnings("ignore") #ignore warnings
 
@@ -164,8 +164,8 @@ def shuffle_positions(mlist):
                          if n not in range(y - self.radius, y + self.radius)])
 
 # Lab Streaming Layer push (pushes a string to the outlet)
-def LSL_push(outlet, string):
-    pylsl.StreamOutlet.push_sample(outlet, [string])
+#def LSL_push(outlet, string):
+#    pylsl.StreamOutlet.push_sample(outlet, [string])
 
 # checks that balls do not spawn in corner or overlap, fixes problem if it occurs
 def valid_positions(mlist):
@@ -442,7 +442,7 @@ def prepare_files():
     return log, highscore_path, high_score, user_number, name, date_sys, audio_path, participant_number, results_path
 
 # == Runs Real Trials (same as practice but user performance is saved) ==
-def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, participant_number, user_number, name, outlet):
+def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, participant_number, user_number, name):#, outlet):
     tot_time = 0 # keeps track of how much time has passed
     # == Messages to user based on gametype ==
     welcome_messages(game, gametype, high_score)
@@ -735,24 +735,24 @@ def main(unified):
         log, highscore_path, high_score, user_number, name, date_sys, audio_path, participant_number, results_path = prepare_files()
     
         # prepare lab streaming layer functionality
-        info = pylsl.StreamInfo('MOT_stream', 'Markers', 1, 0, 'string', '_ptcpt_' + str(participant_number) + '_' + date_sys)
-        outlet = pylsl.StreamOutlet(info)
+        #info = pylsl.StreamInfo('MOT_stream', 'Markers', 1, 0, 'string', '_ptcpt_' + str(participant_number) + '_' + date_sys)
+        #outlet = pylsl.StreamOutlet(info)
 
         game_guide = update_game(0)
         game_prac = update_game(0)
         game_real = update_game(0)
     
         # == Start guide ==
-        key = trials(game_guide, log, 'guide', guide_trials, high_score, audio_path, participant_number, user_number, name, outlet)
+        key = trials(game_guide, log, 'guide', guide_trials, high_score, audio_path, participant_number, user_number, name)#, outlet)
 
         # == Start practice ==
         if key == 'k' or key == 'complete':
-            key = trials(game_prac, log, 'practice', prac_trials, high_score, audio_path, participant_number, user_number, name, outlet)
+            key = trials(game_prac, log, 'practice', prac_trials, high_score, audio_path, participant_number, user_number, name)#, outlet)
 
         # == Start real trials, recording responses ==
         if key == 'k' or key == 'complete':
             #LSL_push(outlet, 'real_trials_start')
-            score, dprimes, last_level, highest_level = trials(game_real, log, 'real', real_time, high_score, audio_path, participant_number, user_number, name, outlet)
+            score, dprimes, last_level, highest_level = trials(game_real, log, 'real', real_time, high_score, audio_path, participant_number, user_number, name)#, outlet)
         else:
             score = 0
     
