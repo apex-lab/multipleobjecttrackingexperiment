@@ -1,12 +1,17 @@
+
+from psychopy import visual
+from egi_pynetstation import NetStation
 import pygame as pg
 import os
 from MOT_constants import *
 import sys
+import pylsl
 
 # == Set window ==
 x, y = 50, 50
 os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x,y)
-win = pg.display.set_mode((0,0), pg.FULLSCREEN)
+# = visual.window.Window(size=win_dimension, fullscr=True, winType='pygame')
+win = pg.display.set_mode(win_dimension, pg.FULLSCREEN)
 pg.display.set_caption(title)
 
 # == Define colors. ==
@@ -14,6 +19,10 @@ background_col = GREY
 hover_col = DARKSLATEGREY
 click_col = GREENYELLOW
 select_col = YELLOW
+
+# Lab Streaming Layer push (pushes a string to the outlet)
+def LSL_push(outlet, string):
+    pylsl.StreamOutlet.push_sample(outlet, [string])
 
 def draw_boundaries(display=win):
     #pg.draw.rect(display, BLACK, pg.Rect(win_width - boundary_size, 0, boundary_size, win_height - boundary_size)) # right
@@ -34,7 +43,7 @@ def draw_square(display=win):
         # -- Function to draw circle onto display
         pg.draw.rect(display, WHITE, pg.Rect(0, win_height - 20, 20,20))
 
-def flash_targets(dlist, tlist, flash):
+def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
     """function to flash targets"""
     play_sound = False
     fixation_cross()
@@ -51,24 +60,28 @@ def flash_targets(dlist, tlist, flash):
             t.draw_circle(win)
     for d in dlist:
         d.draw_circle(win)
+    if flash_start_record == False and gametype == 'real': # record start of flash screen
+        outlet.resync()
+        outlet.send_event('FLS0')
+        #LSL_push(outlet, 'FLSH0') # flash start
     pg.display.update()
-    if play_sound == True:
-        pass
-        #pg.mixer.music.load('MOT_audio\\countdown.mp3')
-        #pg.mixer.music.play()
-        #pg.time.delay(3000)
-        #pg.mixer.music.unload()
+    if flash_start_record == False and gametype == 'real': # record start of flash screen
+        outlet.resync()
+        outlet.send_event('FLS1')
+        #LSL_push(outlet, 'FLSH1') # flash start
+        flash_start_record = True
     return flash
 
-def animate(dlist, tlist, mlist):
+def animate(dlist, tlist, mlist, gametype, outlet, mvmt_record):
     """function to move or animate objects on screen"""
-    #for d in dlist:
-    #   for t in tlist:
     for m in mlist:
         m.detect_collision(mlist)
-            #t.detect_collision(mlist)
-            #d.draw_circle(win)
         m.draw_circle(win)
+        if gametype == 'real' and mvmt_record == False:
+            outlet.resync()
+            outlet.send_event('MOVE')
+            #LSL_push(outlet, 'MVE') #start move
+            mvmt_record = True
     pg.display.update()
 
 def static_draw(mlist):
@@ -83,12 +96,21 @@ def fixation_cross(color=BLACK):
     pg.draw.line(win, color, start_x, end_x, 3)
     pg.draw.line(win, color, start_y, end_y, 3)
 
-def fixation_screen(mlist):
+def fixation_screen(mlist, gametype, outlet, fix_record):
     """function to present the fixation cross and the objects"""
     fixation_cross(BLACK)
     for obj in mlist:
         obj.draw_circle()
+    if gametype == 'real' and fix_record == False: # record start of fixation screen
+        outlet.resync()
+        outlet.send_event('FIX0')
+        #LSL_push(outlet, 'FIX0') #fixation start
     pg.display.update()
+    if gametype == 'real' and fix_record == False: # record start of fixation screen
+        outlet.resync()
+        outlet.send_event('FIX1')
+        #LSL_push(outlet, 'FIX1') #fixation start
+        fix_record = True
 
 def text_objects(text, color, textsize):
     """text object defining text"""
