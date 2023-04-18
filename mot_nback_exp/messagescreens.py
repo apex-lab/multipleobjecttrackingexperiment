@@ -1,5 +1,5 @@
 
-from psychopy import visual
+#from psychopy import visual
 from egi_pynetstation import NetStation
 import pygame as pg
 import os
@@ -21,8 +21,8 @@ click_col = GREENYELLOW
 select_col = YELLOW
 
 # Lab Streaming Layer push (pushes a string to the outlet)
-def LSL_push(outlet, string):
-    pylsl.StreamOutlet.push_sample(outlet, [string])
+#def LSL_push(outlet, string):
+#    pylsl.StreamOutlet.push_sample(outlet, [string])
 
 def draw_boundaries(display=win):
     #pg.draw.rect(display, BLACK, pg.Rect(win_width - boundary_size, 0, boundary_size, win_height - boundary_size)) # right
@@ -30,7 +30,7 @@ def draw_boundaries(display=win):
     pg.draw.rect(display, BLACK, pg.Rect(0, 0, boundary_size, win_height)) # left
     pg.draw.rect(display, BLACK, pg.Rect(0, 0, win_width, boundary_size)) # top
     pg.draw.rect(display, BLACK, pg.Rect(0, win_height - boundary_size, win_width, boundary_size)) # bottom
-    #pg.display.flip()
+    #pg.display.update()
 
 def wait_key():
     """function to wait key press"""
@@ -39,9 +39,25 @@ def wait_key():
             if event.type == pg.KEYDOWN and event.key == pg.K_f:
                 return
 
-def draw_square(display=win):
+def draw_square(outlet, tag, mlist, display=win):
+        # -- Function to draw circle onto display
+        #outlet.send_event(event_type = tag + '0')
+        pg.draw.rect(display, WHITE, pg.Rect(0, win_height - 20, 20,20))
+        if tag == 'CLK' or tag == 'UCK' or tag == 'SPC':
+            static_draw(mlist)
+        #pg.draw.rect(display, BLACK, pg.Rect(21, win_height - 20, win_width - 21,20))
+        if tag == 'FIX' or 'FLS':
+            pg.display.flip()
+        else:    
+            pg.display.update([pg.Rect(0, win_height - 20, 20,20), None])
+        return pg.time.get_ticks()
+        #outlet.send_event(event_type= tag + '1')
+
+def draw_square2(display=win):
         # -- Function to draw circle onto display
         pg.draw.rect(display, WHITE, pg.Rect(0, win_height - 20, 20,20))
+
+
 
 def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
     """function to flash targets"""
@@ -52,7 +68,6 @@ def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
         for t in tlist:
             t.color = GREEN
             t.draw_circle(win)
-            draw_square()
             flash = False
     else:
         for t in tlist:
@@ -61,16 +76,13 @@ def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
     for d in dlist:
         d.draw_circle(win)
     if flash_start_record == False and gametype == 'real': # record start of flash screen
-        outlet.resync()
-        outlet.send_event('FLS0')
         #LSL_push(outlet, 'FLSH0') # flash start
-    pg.display.update()
-    if flash_start_record == False and gametype == 'real': # record start of flash screen
-        outlet.resync()
-        outlet.send_event('FLS1')
-        #LSL_push(outlet, 'FLSH1') # flash start
+        draw_square(outlet, 'FLS', 0)
         flash_start_record = True
-    return flash
+    else:
+        draw_square2()
+    pg.display.flip()
+    return flash, flash_start_record
 
 def animate(dlist, tlist, mlist, gametype, outlet, mvmt_record):
     """function to move or animate objects on screen"""
@@ -78,11 +90,11 @@ def animate(dlist, tlist, mlist, gametype, outlet, mvmt_record):
         m.detect_collision(mlist)
         m.draw_circle(win)
         if gametype == 'real' and mvmt_record == False:
-            outlet.resync()
-            outlet.send_event('MOVE')
+            draw_square(outlet, 'MVE', 0)
             #LSL_push(outlet, 'MVE') #start move
             mvmt_record = True
-    pg.display.update()
+    pg.display.flip()
+    return mvmt_record
 
 def static_draw(mlist):
     """function for static object draw"""
@@ -102,15 +114,11 @@ def fixation_screen(mlist, gametype, outlet, fix_record):
     for obj in mlist:
         obj.draw_circle()
     if gametype == 'real' and fix_record == False: # record start of fixation screen
-        outlet.resync()
-        outlet.send_event('FIX0')
-        #LSL_push(outlet, 'FIX0') #fixation start
-    pg.display.update()
-    if gametype == 'real' and fix_record == False: # record start of fixation screen
-        outlet.resync()
-        outlet.send_event('FIX1')
-        #LSL_push(outlet, 'FIX1') #fixation start
+        draw_square(outlet, 'FIX', 0)
         fix_record = True
+        #LSL_push(outlet, 'FIX0') #fixation start
+    pg.display.flip()
+    return fix_record
 
 def text_objects(text, color, textsize):
     """text object defining text"""
@@ -124,6 +132,7 @@ def msg_to_screen(text, textcolor, textsize, pos, display=win):
     text_rect.center = pos
     draw_boundaries()
     display.blit(text_surface, text_rect)
+    pg.display.flip()
 
 def msg_to_screen_centered(text, textcolor, textsize, display=win):
     """function to render message to screen centered"""
@@ -135,6 +144,7 @@ def msg_to_screen_centered(text, textcolor, textsize, display=win):
     text_rect.center = (win_width/2), (win_height/2)
     draw_boundaries()
     display.blit(text_surface, text_rect)
+    pg.display.flip()
         #if text_x <= max_w:
          #   too_big = False
 
@@ -182,7 +192,7 @@ def message_screen(message, num_targ, total, display=win):
         display.fill(background_col)
         multi_line_message(start_text(num_targ, total), med_font, ((win_width - (win_width / 10)), 120))
     if message == "not_selected_enough":
-        msg_to_screen_centered("Select " + str(num_targ) + " circles!", BLACK, med_font)
+        multi_line_message("Select " + str(num_targ) + " circles!", med_font, (win_width/2, win_height/2))
     if message == "timeup":
         display.fill(background_col)
         msg_to_screen_centered("Time's up! Now resetting", BLACK, large_font)
