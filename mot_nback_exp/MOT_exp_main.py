@@ -442,6 +442,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
     welcome_messages(game, gametype, high_score)
 
     # == Generates the game ==
+    dt = 0
     hit_rates = []
     dprimes = []
     list_d, list_t = generate_list(game, WHITE)
@@ -461,7 +462,6 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
     fix_record = False
     flash_record = False
     mvmt_record = False
-    inter_round_record = False
 
 
     # == Controls the "game" part of the game ==
@@ -599,11 +599,13 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                                 # == Records info for the trial ==
                 if gametype == 'real':
                     if len(selected_list) == len(selected_targ):
-                        square_time = draw_square(outlet, 'YES', list_m)
+                        square_time = draw_square(outlet, 'COR', list_m)
                     else:
-                        square_time = draw_square(outlet, 'NO', list_m)
+                        square_time = draw_square(outlet, 'MIS', list_m)
                     hit_rates.append(len(selected_targ) / len(selected_list))
                     dprimes = d_prime(dprimes, hit_rates, game)
+                    d_prime_string = '%.2f' % dprimes[-1]
+                    #outlet.send_event(event_type = d_prime_string)
                     t_sub = ((t_keypress - t0)/1000) - animation_time
                     record_response(participant_number, user_number, name, t_sub, len(selected_targ), game, False, dprimes[-1], total_time, recorder)
 
@@ -653,7 +655,6 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 fix_record = False
                 flash_record = False
                 mvmt_record = False
-                inter_round_record = False
                 
         else: # -- end of experiment/practice/guide
             if gametype == 'real':
@@ -688,7 +689,7 @@ def main(unified):
 
         #prepare netstation functionality 
         #IP address of NetStation - CHANGE THIS TO MATCH THE IP ADDRESS OF YOUR NETSTATION
-        IP_ns = '10.10.10.42'
+        IP_ns = '10.10.10.42' #needs to be specified for the computer
 
         #IP address of amplifier (if using 300
         #series, this is the same as the IP address of
