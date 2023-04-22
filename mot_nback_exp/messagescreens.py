@@ -69,6 +69,9 @@ def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
             t.color = GREEN
             t.draw_circle(win)
             flash = False
+        if gametype == 'real':
+            #draw_square(outlet, 'FLS', 0)
+            pass
     else:
         for t in tlist:
             t.color = default_color
@@ -79,8 +82,9 @@ def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
         #LSL_push(outlet, 'FLSH0') # flash start
         draw_square(outlet, 'FLS', 0)
         flash_start_record = True
-    else:
-        draw_square2()
+    #else:
+    #    if pg.time.get_ticks() - start_time < 200 and flash == False:
+    #        draw_square2()
     pg.display.flip()
     return flash, flash_start_record
 

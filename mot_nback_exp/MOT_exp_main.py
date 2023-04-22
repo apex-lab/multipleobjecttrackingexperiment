@@ -479,7 +479,8 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
         # == Controls responses to user input ===
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                square_time = draw_square(outlet, 'END', list_m)
+                if gametype == 'real':
+                    square_time = draw_square(outlet, 'END', list_m)
                 pg.quit()
                 sys.exit()
             if event.type == pg.KEYDOWN:
@@ -549,23 +550,27 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
             if not reset:
                 #draw_boundaries()
                 if dt <= Tfix + 1:
-                    if dt < (Tfix + 1) / 4:
+                    if dt < (Tfix + 1) / 4 and gametype == 'real':
                         draw_square2()
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     pg.mouse.set_visible(False)
                     fix_record = fixation_screen(list_m, gametype, outlet, fix_record)
-                elif Tfix + 1 < dt <= Tfl + 1.95:
+                elif Tfix + 1 < dt <= Tfl + 1.85:
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     if flash == True:
+                        start_time = pg.time.get_ticks()
                         flash, flash_record = flash_targets(list_d, list_t, flash, gametype, outlet, flash_record) # flash color
                         dt = Tfl + 1.95
-                elif Tfl + 1.95 < dt <= Tfl + 2:
+                        flash = False
+                elif Tfl + 1.85 < dt <= Tfl + 2:
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     flash_targets(list_d, list_t, flash, gametype, outlet, flash_record) # reset color
                 elif Tfl + 2 < dt <= Tani + 2:
+                    if dt < Tfl + 2.1 and gametype == 'real':
+                        draw_square2()
                     pushed_flash_already = False
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
@@ -598,14 +603,16 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
 
                                 # == Records info for the trial ==
                 if gametype == 'real':
-                    if len(selected_list) == len(selected_targ):
+                    if len(selected_list) == len(selected_targ) and gametype == 'real':
                         square_time = draw_square(outlet, 'COR', list_m)
                     else:
-                        square_time = draw_square(outlet, 'MIS', list_m)
+                        if gametype == 'real':
+                            square_time = draw_square(outlet, 'MIS', list_m)
                     hit_rates.append(len(selected_targ) / len(selected_list))
                     dprimes = d_prime(dprimes, hit_rates, game)
-                    d_prime_string = '%.2f' % dprimes[-1]
-                    #outlet.send_event(event_type = d_prime_string)
+                    if dprimes != []:
+                        d_prime_string = '%.2f' % dprimes[-1]
+                        #outlet.send_event(event_type = d_prime_string)
                     t_sub = ((t_keypress - t0)/1000) - animation_time
                     record_response(participant_number, user_number, name, t_sub, len(selected_targ), game, False, dprimes[-1], total_time, recorder)
 
