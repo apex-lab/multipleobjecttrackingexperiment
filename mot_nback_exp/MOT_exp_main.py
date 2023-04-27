@@ -42,7 +42,7 @@ success = 1
 failure = -3
 
 # == Trial variables ==
-real_time = 1.2 * (10 ** 6) # time that real trials last (milliseconds)
+real_time = 12 * (10 ** 5) # time that real trials last (milliseconds)
 prac_trials = 2 # number of practice trials
 guide_trials = 1 # number of guide trials
 
@@ -293,8 +293,8 @@ def end_messages(game, gametype, recorder):
         wait_key()
 
 # == determines whether a user can take a break == 
-def take_a_break(gametype, tot_time):
-    if gametype == 'real' and tot_time > (6 * (10 ** 5)):
+def take_a_break(gametype, total_time):
+    if gametype == 'real' and total_time >= (6 * (10 ** 5)):
         return True
     return False
 
@@ -437,7 +437,6 @@ def prepare_files():
 # == Runs Real Trials (same as practice but user performance is saved) ==
 def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, participant_number, user_number, name, outlet):
     #outlet.resync()
-    tot_time = 0 # keeps track of how much time has passed
     # == Messages to user based on gametype ==
     welcome_messages(game, gametype, high_score)
 
@@ -448,6 +447,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
     list_d, list_t = generate_list(game, WHITE)
     list_m = list_d + list_t
     count = 0
+    break_given = False
     flash = True
     reset = False
     submitted = False
@@ -455,18 +455,19 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
     insufficient_selections = False # whole lot of initiating variables in this area
     timeup = False
     score = consecutive = 0 # initializes score and consecutive correct trials
-    t0 = total_time = start_time = pg.time.get_ticks()
+    t0 = start_time = pg.time.get_ticks()
+    total_time = 0
     square_time = 0
 
     #keeps track of which time signatures we have recorded already for a given round
     fix_record = False
     flash_record = False
-    mvmt_record = False
+    mvmt_start = False
+    mvmt_stop = False
 
 
     # == Controls the "game" part of the game ==
     while True:
-        trial_time = pg.time.get_ticks() # keep track of trial length (including possible breaks)
         num_targs = game["targs"]
         pg.time.Clock().tick_busy_loop(FPS)  # = Set FPS
         win.fill(background_col)  # - fill background with background color
@@ -480,7 +481,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 if gametype == 'real':
-                    square_time = draw_square(outlet, 'END', list_m)
+                    square_time = draw_square(outlet, 'STOP', list_m)
                 pg.quit()
                 sys.exit()
             if event.type == pg.KEYDOWN:
@@ -491,14 +492,14 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 if event.key == pg.K_ESCAPE: # what is going on here
                     if gametype == 'real':
                         #LSL_push(outlet, 'ESC') #escape/quit
-                        square_time = draw_square(outlet, 'ESC', list_m)
+                        square_time = draw_square(outlet, 'ESCP', list_m)
                         return score, dprimes, (game["stage"] + 1), highest_level 
                     else:
                         return 'esc'
                 if event.key == pg.K_SPACE and (Tani + 2 < dt <= Tans+ 2):
                     if gametype == 'real':    
                         #LSL_push(outlet, 'SPC') #space
-                        square_time = draw_square(outlet, 'SPC', list_m)
+                        square_time = draw_square(outlet, 'SPCE', list_m)
                     if not reset:
                         for target in list_t:
                             if target.isSelected and not target.isClicked:
@@ -521,12 +522,12 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                     if event.type == pg.MOUSEBUTTONDOWN:
                         if not obj.isClicked and not obj.isSelected:
                             if gametype == 'real':   
-                                square_time = draw_square(outlet, 'CLK', list_m)
+                                square_time = draw_square(outlet, 'CLCK', list_m)
                                 #LSL_push(outlet, 'CLK') #click object 
                             obj.state_control("clicked")
                         if not obj.isClicked and obj.isSelected:
                             if gametype == 'real': 
-                                square_time = draw_square(outlet, 'UCK', list_m)
+                                square_time = draw_square(outlet, 'UCLK', list_m)
                                 #LSL_push(outlet, 'UCLK') #unclick object 
                             obj.state_control("neutral")
                     if event.type == pg.MOUSEBUTTONUP:
@@ -555,12 +556,11 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     pg.mouse.set_visible(False)
-                    fix_record = fixation_screen(list_m, gametype, outlet, fix_record)
+                    fix_record = fixation_screen(list_m, gametype, outlet, fix_record, game["stage"])
                 elif Tfix + 1 < dt <= Tfl + 1.85:
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     if flash == True:
-                        start_time = pg.time.get_ticks()
                         flash, flash_record = flash_targets(list_d, list_t, flash, gametype, outlet, flash_record) # flash color
                         dt = Tfl + 1.95
                         flash = False
@@ -574,8 +574,11 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                     pushed_flash_already = False
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
-                    mvmt_record = animate(list_d, list_t, list_m, gametype, outlet, mvmt_record)
+                    mvmt_start = animate(list_d, list_t, list_m, gametype, outlet, mvmt_start)
                 elif Tani + 2 < dt <= Tans+ 2:
+                    if mvmt_stop == False and gametype == 'real':
+                        square_time = draw_square(outlet, 'MVE1', list_m)
+                        mvmt_stop = True
                     if Tani + 2 < dt <= Tani + 2.05: # reset mouse position
                         pg.mouse.set_pos([win_width/2,win_height/2])
                     pg.mouse.set_visible(True)
@@ -595,7 +598,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                     timeup = True
 
             if submitted: # -- if the user submits answers properly
-                total_time = (pg.time.get_ticks() - start_time) / 1000
+                total_time = pg.time.get_ticks() - start_time # total time in milliseconds since real trials began
                 # == message screen stating performance on that trial ==
                 pg.mouse.set_visible(False)
                 correct_txt(len(selected_targ), len(list_t), audio_path)
@@ -604,17 +607,17 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                                 # == Records info for the trial ==
                 if gametype == 'real':
                     if len(selected_list) == len(selected_targ) and gametype == 'real':
-                        square_time = draw_square(outlet, 'COR', list_m)
+                        square_time = draw_square(outlet, 'CRCT', list_m)
                     else:
                         if gametype == 'real':
-                            square_time = draw_square(outlet, 'MIS', list_m)
+                            miss_tag = 'MS' + str(len(selected_targ)) + str(num_targs)
+                            square_time = draw_square(outlet, miss_tag, list_m)
                     hit_rates.append(len(selected_targ) / len(selected_list))
                     dprimes = d_prime(dprimes, hit_rates, game)
-                    if dprimes != []:
-                        d_prime_string = '%.2f' % dprimes[-1]
-                        #outlet.send_event(event_type = d_prime_string)
+                    d_prime_string = str(dprimes[-1])[:4]
+                    #outlet.send_event(event_type = d_prime_string)
                     t_sub = ((t_keypress - t0)/1000) - animation_time
-                    record_response(participant_number, user_number, name, t_sub, len(selected_targ), game, False, dprimes[-1], total_time, recorder)
+                    record_response(participant_number, user_number, name, t_sub, len(selected_targ), game, False, dprimes[-1], total_time / 1000, recorder)
 
                 # == Based on that performance, we update the stage and score ==
                 game, score, consecutive = update_stage(selected_targ, game, gametype, score, consecutive)
@@ -623,10 +626,10 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 reset = True
 
             if timeup: # -- if the user runs out of time
-                total_time = (pg.time.get_ticks() - start_time) / 1000
+                total_time = pg.time.get_ticks() - start_time # total time in milliseconds
                 pg.mouse.set_visible(False)
                 if gametype == 'real':
-                    record_response(participant_number, user_number, name, "timed out", "NA", game, True, "NA", total_time, recorder)
+                    record_response(participant_number, user_number, name, "timed out", "NA", game, True, "NA", total_time / 1000, recorder)
                 message_screen("timeup", num_targs, num_targs + game["dists"])
                 delay(feedback_time)
                 count -= 1
@@ -638,12 +641,12 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 #    square_time = draw_square(outlet, 'SCR0')
                     #LSL_push(outlet, 'SCR0') #screens start showing
                 #    inter_round_record = True
-
                 pg.mouse.set_visible(False)
                 # gives user break after certain amount of time
-                if take_a_break(gametype, tot_time):
+                print(total_time)
+                if take_a_break(gametype, total_time) and break_given == False:
+                    break_given = True
                     user_break_screen()  
-                    tot_time = 0
 
                 game = update_game(game["stage"])
                 list_d, list_t = generate_list(game, WHITE)
@@ -651,7 +654,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 if gametype != 'real':
                     count += 1
                 else:
-                    count = total_time * 1000
+                    count = total_time #* 1000
                 flash = True
                 submitted = timeup = insufficient_selections= reset = sound_played = False
                 if gametype == 'real':
@@ -661,11 +664,12 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 # resets time signature variables for next round
                 fix_record = False
                 flash_record = False
-                mvmt_record = False
+                mvmt_start = False
+                mvmt_stop = False
                 
         else: # -- end of experiment/practice/guide
             if gametype == 'real':
-                square_time = draw_square(outlet, 'END', list_m)
+                square_time = draw_square(outlet, 'STOP', list_m)
                 #LSL_push(outlet, 'END')
             pg.mouse.set_visible(False)
             end_messages(game, gametype, recorder)
@@ -677,8 +681,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
         
 
         # total gameplay time (for use in giving users a break)
-        trial_time = pg.time.get_ticks() - trial_time
-        tot_time += trial_time 
+        total_time = pg.time.get_ticks() - start_time # current time minus the time at which we started 
 
 # == Main Loop.  ==
 def main(unified):
@@ -726,7 +729,8 @@ def main(unified):
 
         # == Start real trials, recording responses ==
         if key == 'k' or key == 'complete':
-            square_time = draw_square(outlet, 'BEG', 0)
+            #outlet.resync()
+            square_time = draw_square(outlet, 'STRT', 0)
             #LSL_push(outlet, 'real_trials_start')
             score, dprimes, last_level, highest_level = trials(game_real, log, 'real', real_time, high_score, audio_path, participant_number, user_number, name, outlet)
         else:
@@ -743,7 +747,8 @@ def main(unified):
             f.close()
             new_high_score(score, i)
         else:
-            final_score(score)
+            pass
+            #final_score(score)
 
         summary_csv_path = os.path.join(results_path, 'summary.csv')
         if not (os.path.isfile(summary_csv_path)): # if it doesn't exist, then create a file

@@ -5,7 +5,7 @@ import pygame as pg
 import os
 from MOT_constants import *
 import sys
-import pylsl
+#import pylsl
 
 # == Set window ==
 x, y = 50, 50
@@ -41,17 +41,16 @@ def wait_key():
 
 def draw_square(outlet, tag, mlist, display=win):
         # -- Function to draw circle onto display
-        #outlet.send_event(event_type = tag + '0')
+        #outlet.send_event(event_type = tag)
         pg.draw.rect(display, WHITE, pg.Rect(0, win_height - 20, 20,20))
-        if tag == 'CLK' or tag == 'UCK' or tag == 'SPC':
+        if tag == 'CLCK' or tag == 'UCLK' or tag == 'SPCE':
             static_draw(mlist)
         #pg.draw.rect(display, BLACK, pg.Rect(21, win_height - 20, win_width - 21,20))
-        if tag == 'FIX' or 'FLS':
+        if tag == 'FLSH' or (tag[0] == 'F' and tag[1] == 'X'):
             pg.display.flip()
         else:    
             pg.display.update([pg.Rect(0, win_height - 20, 20,20), None])
         return pg.time.get_ticks()
-        #outlet.send_event(event_type= tag + '1')
 
 def draw_square2(display=win):
         # -- Function to draw circle onto display
@@ -88,17 +87,17 @@ def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
     pg.display.flip()
     return flash, flash_start_record
 
-def animate(dlist, tlist, mlist, gametype, outlet, mvmt_record):
+def animate(dlist, tlist, mlist, gametype, outlet, mvmt_start):
     """function to move or animate objects on screen"""
     for m in mlist:
         m.detect_collision(mlist)
         m.draw_circle(win)
-        if gametype == 'real' and mvmt_record == False:
-            draw_square(outlet, 'MVE', 0)
+        if gametype == 'real' and mvmt_start == False:
+            draw_square(outlet, 'MVE0', 0)
             #LSL_push(outlet, 'MVE') #start move
-            mvmt_record = True
+            mvmt_start = True
     pg.display.flip()
-    return mvmt_record
+    return mvmt_start
 
 def static_draw(mlist):
     """function for static object draw"""
@@ -112,13 +111,17 @@ def fixation_cross(color=BLACK):
     pg.draw.line(win, color, start_x, end_x, 3)
     pg.draw.line(win, color, start_y, end_y, 3)
 
-def fixation_screen(mlist, gametype, outlet, fix_record):
+def fixation_screen(mlist, gametype, outlet, fix_record, stage):
     """function to present the fixation cross and the objects"""
     fixation_cross(BLACK)
     for obj in mlist:
         obj.draw_circle()
     if gametype == 'real' and fix_record == False: # record start of fixation screen
-        draw_square(outlet, 'FIX', 0)
+        level = stage + 1 # given the math, the level the user is on is the stage plus one
+        fixation_tag = 'FX' + str(level) # add the level to the end of the string
+        if len(fixation_tag) < 4: # if single digit, then add a trailing X
+            fixation_tag = fixation_tag + 'X'
+        draw_square(outlet, fixation_tag, 0)
         fix_record = True
         #LSL_push(outlet, 'FIX0') #fixation start
     pg.display.flip()

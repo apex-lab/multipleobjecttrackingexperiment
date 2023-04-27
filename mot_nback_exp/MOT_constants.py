@@ -7,7 +7,6 @@ from screeninfo import get_monitors
 
 # == Path For Storing Trial Results. ==
 save_path = 'C:\\Users\\Administrator\\psychexperiment\\multiple-object-tracking-paradigm\\results\\'
-print()
 """
 Define the object class attributes
 """
