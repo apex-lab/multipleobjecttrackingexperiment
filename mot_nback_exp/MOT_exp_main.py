@@ -480,8 +480,8 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
         # == Controls responses to user input ===
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                if gametype == 'real':
-                    square_time = draw_square(outlet, 'STOP', list_m)
+                #if gametype == 'real':
+                square_time = draw_square(outlet, 'STOP', list_m)
                 pg.quit()
                 sys.exit()
             if event.type == pg.KEYDOWN:
@@ -490,16 +490,17 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                     #square_time = draw_square(outlet, 'SKP', list_m)
                     return 'k'
                 if event.key == pg.K_ESCAPE: # what is going on here
+                    square_time = draw_square(outlet, 'ESCP', list_m)
                     if gametype == 'real':
                         #LSL_push(outlet, 'ESC') #escape/quit
-                        square_time = draw_square(outlet, 'ESCP', list_m)
+                        #square_time = draw_square(outlet, 'ESCP', list_m)
                         return score, dprimes, (game["stage"] + 1), highest_level 
                     else:
                         return 'esc'
                 if event.key == pg.K_SPACE and (Tani + 2 < dt <= Tans+ 2):
-                    if gametype == 'real':    
+                    #if gametype == 'real':    
                         #LSL_push(outlet, 'SPC') #space
-                        square_time = draw_square(outlet, 'SPCE', list_m)
+                    square_time = draw_square(outlet, 'SPCE', list_m)
                     if not reset:
                         for target in list_t:
                             if target.isSelected and not target.isClicked:
@@ -521,13 +522,13 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                             obj.state_control("hovered")
                     if event.type == pg.MOUSEBUTTONDOWN:
                         if not obj.isClicked and not obj.isSelected:
-                            if gametype == 'real':   
-                                square_time = draw_square(outlet, 'CLCK', list_m)
+                            #if gametype == 'real':   
+                            square_time = draw_square(outlet, 'CLCK', list_m)
                                 #LSL_push(outlet, 'CLK') #click object 
                             obj.state_control("clicked")
                         if not obj.isClicked and obj.isSelected:
-                            if gametype == 'real': 
-                                square_time = draw_square(outlet, 'UCLK', list_m)
+                            #if gametype == 'real': 
+                            square_time = draw_square(outlet, 'UCLK', list_m)
                                 #LSL_push(outlet, 'UCLK') #unclick object 
                             obj.state_control("neutral")
                     if event.type == pg.MOUSEBUTTONUP:
@@ -551,7 +552,7 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
             if not reset:
                 #draw_boundaries()
                 if dt <= Tfix + 1:
-                    if dt < (Tfix + 1) / 4 and gametype == 'real':
+                    if dt < (Tfix + 1) / 4:# and gametype == 'real':
                         draw_square2()
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
@@ -569,14 +570,14 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                         targ.state_control("neutral")
                     flash_targets(list_d, list_t, flash, gametype, outlet, flash_record) # reset color
                 elif Tfl + 2 < dt <= Tani + 2:
-                    if dt < Tfl + 2.1 and gametype == 'real':
+                    if dt < Tfl + 2.1:# and gametype == 'real':
                         draw_square2()
                     pushed_flash_already = False
                     for targ in list_m: # hovering does not change color
                         targ.state_control("neutral")
                     mvmt_start = animate(list_d, list_t, list_m, gametype, outlet, mvmt_start)
                 elif Tani + 2 < dt <= Tans+ 2:
-                    if mvmt_stop == False and gametype == 'real':
+                    if mvmt_stop == False: # and gametype == 'real':
                         square_time = draw_square(outlet, 'MVE1', list_m)
                         mvmt_stop = True
                     if Tani + 2 < dt <= Tani + 2.05: # reset mouse position
@@ -606,12 +607,12 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
 
                                 # == Records info for the trial ==
                 if gametype == 'real':
-                    if len(selected_list) == len(selected_targ) and gametype == 'real':
+                    if len(selected_list) == len(selected_targ): # and gametype == 'real':
                         square_time = draw_square(outlet, 'CRCT', list_m)
                     else:
-                        if gametype == 'real':
-                            miss_tag = 'MS' + str(len(selected_targ)) + str(num_targs)
-                            square_time = draw_square(outlet, miss_tag, list_m)
+                        #if gametype == 'real':
+                        miss_tag = 'MS' + str(len(selected_targ)) + str(num_targs)
+                        square_time = draw_square(outlet, miss_tag, list_m)
                     hit_rates.append(len(selected_targ) / len(selected_list))
                     dprimes = d_prime(dprimes, hit_rates, game)
                     d_prime_string = str(dprimes[-1])[:4]
@@ -643,7 +644,6 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 #    inter_round_record = True
                 pg.mouse.set_visible(False)
                 # gives user break after certain amount of time
-                print(total_time)
                 if take_a_break(gametype, total_time) and break_given == False:
                     break_given = True
                     user_break_screen()  
@@ -668,10 +668,13 @@ def trials(game, recorder, gametype, time_or_trials, high_score, audio_path, par
                 mvmt_stop = False
                 
         else: # -- end of experiment/practice/guide
-            if gametype == 'real':
-                square_time = draw_square(outlet, 'STOP', list_m)
+            #if gametype == 'real':
+            square_time = draw_square(outlet, 'STOP', list_m)
                 #LSL_push(outlet, 'END')
             pg.mouse.set_visible(False)
+            if gametype == 'real':
+                # start rest screen 2 #
+                rest_screen(outlet, 2, audio_path)
             end_messages(game, gametype, recorder)
             if gametype == 'real':
                 recorder.close()
@@ -720,11 +723,16 @@ def main(unified):
         game_prac = update_game(0)
         game_real = update_game(0)
     
+        # start rest screen 1 #
+        rest_screen(outlet, 0, audio_path)
+
         # == Start guide ==
+        square_time = draw_square(outlet, 'STRT', 0)
         key = trials(game_guide, log, 'guide', guide_trials, high_score, audio_path, participant_number, user_number, name, outlet)
 
         # == Start practice ==
         if key == 'k' or key == 'complete':
+            square_time = draw_square(outlet, 'STRT', 0)
             key = trials(game_prac, log, 'practice', prac_trials, high_score, audio_path, participant_number, user_number, name, outlet)
 
         # == Start real trials, recording responses ==

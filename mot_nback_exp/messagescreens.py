@@ -56,8 +56,6 @@ def draw_square2(display=win):
         # -- Function to draw circle onto display
         pg.draw.rect(display, WHITE, pg.Rect(0, win_height - 20, 20,20))
 
-
-
 def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
     """function to flash targets"""
     play_sound = False
@@ -77,9 +75,9 @@ def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
             t.draw_circle(win)
     for d in dlist:
         d.draw_circle(win)
-    if flash_start_record == False and gametype == 'real': # record start of flash screen
+    if flash_start_record == False: #and gametype == 'real': # record start of flash screen
         #LSL_push(outlet, 'FLSH0') # flash start
-        draw_square(outlet, 'FLS', 0)
+        draw_square(outlet, 'FLSH', 0)
         flash_start_record = True
     #else:
     #    if pg.time.get_ticks() - start_time < 200 and flash == False:
@@ -92,7 +90,7 @@ def animate(dlist, tlist, mlist, gametype, outlet, mvmt_start):
     for m in mlist:
         m.detect_collision(mlist)
         m.draw_circle(win)
-        if gametype == 'real' and mvmt_start == False:
+        if mvmt_start == False: # and gametype == 'real':
             draw_square(outlet, 'MVE0', 0)
             #LSL_push(outlet, 'MVE') #start move
             mvmt_start = True
@@ -116,7 +114,7 @@ def fixation_screen(mlist, gametype, outlet, fix_record, stage):
     fixation_cross(BLACK)
     for obj in mlist:
         obj.draw_circle()
-    if gametype == 'real' and fix_record == False: # record start of fixation screen
+    if fix_record == False: # and gametype == 'real' # record start of fixation screen
         level = stage + 1 # given the math, the level the user is on is the stage plus one
         fixation_tag = 'FX' + str(level) # add the level to the end of the string
         if len(fixation_tag) < 4: # if single digit, then add a trailing X
@@ -349,6 +347,65 @@ def mot_screen():
     msg_to_screen_centered("Motion Object Tracking (press F to continue)", BLACK, large_font)
     pg.display.flip()
     wait_key()
+
+# rest screen for collecting alpha wave data before/after the experiment
+def rest_screen(outlet, num, audio_path):
+    win.fill(background_col)
+    draw_boundaries()
+    multi_line_message("Please focus your eyes on the cross that will appear at the center of the screen.\n\n"\
+                       "Do your best to keep your eyes still and your jaw/other muscles relaxed.\n\n" \
+                        "Press F to begin this portion of the experiment whenever you are ready.", large_font, ((win_width - (win_width / 10)), 40))
+    wait_key()
+
+    # eyes open portion 
+    eyes_open_start = pg.time.get_ticks()
+    draw_square(outlet, "OPN" + str(num), [])
+    while (pg.time.get_ticks() - eyes_open_start <= 180000):
+        win.fill(background_col)
+        draw_boundaries()
+        fixation_cross()
+        if pg.time.get_ticks() - eyes_open_start <= 100:
+            draw_square2()
+        pg.display.flip()
+    eyes_open_stop = pg.time.get_ticks()
+    draw_square(outlet, "OPN" + str(num + 1), [])
+    while (pg.time.get_ticks() - eyes_open_stop < 100):
+        win.fill(background_col)
+        draw_boundaries()
+        draw_square2()
+        pg.display.flip()
+    
+    # eyes closed portion
+    win.fill(background_col)
+    draw_boundaries()
+    multi_line_message("Please close your eyes and do your best not to fall asleep. \n\n" \
+                       "Do your best to keep your eyes still and your jaw/other muscles relaxed. \n\n" \
+                        "You will hear a noise when it is time for you to open your eyes. \n\n" \
+                       "Press F to begin this portion of the experiment whenever you are ready. ", large_font, ((win_width - (win_width / 10)), 40))
+    wait_key()
+    eyes_closed_start = pg.time.get_ticks()
+    draw_square(outlet, "CLS" + str(num), [])
+    while (pg.time.get_ticks() - eyes_closed_start <= 180000):
+        win.fill(background_col)
+        draw_boundaries()
+        fixation_cross()
+        if pg.time.get_ticks() - eyes_closed_start <= 100:
+            draw_square2()
+        pg.display.flip()
+    eyes_closed_stop = pg.time.get_ticks()
+    draw_square(outlet, "CLS" + str(num + 1), [])
+    while (pg.time.get_ticks() - eyes_closed_stop < 100):
+        win.fill(background_col)
+        draw_boundaries()
+        draw_square2()
+        pg.display.flip()
+    pg.mixer.music.load(os.path.join(audio_path,'open_eyes.mp3'))
+    pg.mixer.music.set_volume(0.22)
+    pg.mixer.music.play()
+    pg.time.delay(2000)
+    pg.mixer.music.unload()
+    return
+        
 
 # deprecated... turns out that we do not need it
 def consent_screens():
