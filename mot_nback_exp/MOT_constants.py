@@ -66,7 +66,7 @@ def start_text_nback():
     "Furthermore, you may press \"k\" to skip through the practice trials once the balls have been displayed."
     
 
-fix_text = "First, you will see this cross. Please focus your gaze on the cross. \nPress F to continue."
+fix_text = "First, you will see this cross. Please focus your gaze here. \nPress F to continue."
 
 practice_text = "You will now practice with a 1-back task and a 2-back task. \n\nPress F to continue."
 def input_text():
@@ -74,8 +74,8 @@ def input_text():
 
 def present_text(num_targ, total): 
     return "Now, " + str(total) + " circles will appear randomly around the screen. " + str(num_targ) + " random " \
-    "circles will flash briefly. Remember which circles flashed. Remember to focus your gaze on the cross before the circles flash and then you may move your eyes. The cross will disappear, and all of the circles " \
-    "will start moving when the flashing stops. \n\nPress F to continue."\
+    "circles will flash briefly. Remember which circles flashed. The cross will disappear, and all circles " \
+    "will start moving when the flashing stops.\n\nPress F to continue."\
     
 
 submit_ans_txt = "When the circles stop moving, select the circles that you've been tracking.\n" \

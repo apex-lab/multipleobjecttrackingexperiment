@@ -41,7 +41,10 @@ def wait_key():
 
 def draw_square(outlet, tag, mlist, display=win):
         # -- Function to draw circle onto display
-        #outlet.send_event(event_type = tag)
+        try:
+            outlet.send_event(event_type = tag)
+        except:
+            pass
         pg.draw.rect(display, WHITE, pg.Rect(0, win_height - 20, 20,20))
         if tag == 'CLCK' or tag == 'UCLK' or tag == 'SPCE':
             static_draw(mlist)
@@ -56,6 +59,8 @@ def draw_square2(display=win):
         # -- Function to draw circle onto display
         pg.draw.rect(display, WHITE, pg.Rect(0, win_height - 20, 20,20))
 
+
+
 def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
     """function to flash targets"""
     play_sound = False
@@ -66,22 +71,16 @@ def flash_targets(dlist, tlist, flash, gametype, outlet, flash_start_record):
             t.color = GREEN
             t.draw_circle(win)
             flash = False
-        if gametype == 'real':
-            #draw_square(outlet, 'FLS', 0)
-            pass
     else:
         for t in tlist:
             t.color = default_color
             t.draw_circle(win)
     for d in dlist:
         d.draw_circle(win)
-    if flash_start_record == False: #and gametype == 'real': # record start of flash screen
+    if flash_start_record == False:# and gametype == 'real': # record start of flash screen
         #LSL_push(outlet, 'FLSH0') # flash start
-        draw_square(outlet, 'FLSH', 0)
+        draw_square(outlet, 'FLSH', dlist + tlist)
         flash_start_record = True
-    #else:
-    #    if pg.time.get_ticks() - start_time < 200 and flash == False:
-    #        draw_square2()
     pg.display.flip()
     return flash, flash_start_record
 
@@ -90,8 +89,8 @@ def animate(dlist, tlist, mlist, gametype, outlet, mvmt_start):
     for m in mlist:
         m.detect_collision(mlist)
         m.draw_circle(win)
-        if mvmt_start == False: # and gametype == 'real':
-            draw_square(outlet, 'MVE0', 0)
+        if mvmt_start == False: #and gametype == 'real':
+            draw_square(outlet, 'MVE0', dlist + tlist)
             #LSL_push(outlet, 'MVE') #start move
             mvmt_start = True
     pg.display.flip()
@@ -114,12 +113,12 @@ def fixation_screen(mlist, gametype, outlet, fix_record, stage):
     fixation_cross(BLACK)
     for obj in mlist:
         obj.draw_circle()
-    if fix_record == False: # and gametype == 'real' # record start of fixation screen
+    if fix_record == False: #and gametype == 'real' record start of fixation screen
         level = stage + 1 # given the math, the level the user is on is the stage plus one
         fixation_tag = 'FX' + str(level) # add the level to the end of the string
         if len(fixation_tag) < 4: # if single digit, then add a trailing X
             fixation_tag = fixation_tag + 'X'
-        draw_square(outlet, fixation_tag, 0)
+        draw_square(outlet, fixation_tag, mlist)
         fix_record = True
         #LSL_push(outlet, 'FIX0') #fixation start
     pg.display.flip()
@@ -285,6 +284,32 @@ def is_valid(num):
     else:
         return False
 
+def choose_lvl():
+    level = ''
+    text = "Please enter a level to start on.\n"\
+            "If you wish to skip the guide and practice, then enter any number.\n"\
+            "If you are new to this game or want to do the guide/practice trials, then press Enter without entering anything\n\n" \
+            "Level: "
+            
+    pg.mouse.set_visible(False)
+    proceed = False
+    while proceed == False:
+        for event in pg.event.get():
+            if event.type == pg.KEYDOWN:
+                if 48 <= event.key <= 57: # numbers are the valid inputs (ascii)
+                    #text = text + chr(event.key)
+                    level = level + chr(event.key)
+                if event.key == pg.K_KP_ENTER or event.key == pg.K_RETURN:
+                    proceed = True
+                if event.key == pg.K_BACKSPACE or event.key == pg.K_DELETE:
+                    #text = text[:-1]
+                    level = level[:-1]
+        win.fill(background_col)
+        draw_boundaries()
+        multi_line_message(text + level, large_font, ((win_width - (win_width / 10)), 120))
+        pg.display.flip()
+    return level
+            
 def user_info(type):
     pg.mouse.set_visible(False)
     pg.display.flip()
@@ -348,19 +373,186 @@ def mot_screen():
     pg.display.flip()
     wait_key()
 
+
+def send_tags(outlet):
+    string_list = []
+    if outlet != 0:
+        # handle hardcoded/consistent tags
+        outlet.send_event(event_type = 'DIN1')
+        outlet.send_event(event_type = 'STRT')
+        outlet.send_event(event_type = 'BEGN')
+        outlet.send_event(event_type = 'FLSH')
+        outlet.send_event(event_type = 'STOP')
+        outlet.send_event(event_type = 'ESCP')
+        outlet.send_event(event_type = 'CRCT')
+        outlet.send_event(event_type = 'SPCE')
+        outlet.send_event(event_type = 'CLCK')
+        outlet.send_event(event_type = 'UCLK')
+        outlet.send_event(event_type = 'MVE0')
+        outlet.send_event(event_type = 'MVE1')
+        outlet.send_event(event_type = 'RESY')
+        outlet.send_event(event_type = 'OPN0')
+        outlet.send_event(event_type = 'OPN1')
+        outlet.send_event(event_type = 'OPN2')
+        outlet.send_event(event_type = 'OPN3')
+        outlet.send_event(event_type = 'CLS0')
+        outlet.send_event(event_type = 'CLS1')
+        outlet.send_event(event_type = 'CLS2')
+        outlet.send_event(event_type = 'CLS3')
+        
+        # handle level/fixation tags
+        for i in range(1, 100):
+            if len(str(i)) == 1:
+                outlet.send_event(event_type = 'FXX' + str(i))
+            else:
+                outlet.send_event(event_type = 'FX' + str(i))
+        
+        # handle miss tags
+        for i in range(1, 10):
+            for j in range(0, i):
+                outlet.send_event(event_type = 'MS' + str(j) + str(i))
+        
+        # 175 tags so far, need 36 filler tags
+        for i in range(1,36):
+            if i < 10:
+                outlet.send_event(event_type = 'TTT' + str(i))
+            else:
+                outlet.send_event(event_type = 'TT' + str(i))
+        
+        # handle d-prime scores (need to write a function for deciphering this)
+        for i in range(-301, 301):
+            string = str(i)
+            if i >= 0: # positive numbers and zero (appears to work)
+                if len(string) == 1: #single digit
+                    string = '0.0' + string
+                elif len(string) == 2: #double digit
+                    string = '0.'+ string
+                else: #triple digit
+                    string = string[0] + '.' + string[1] + string[2]            
+            else: # negative numbers (appears not to work. make this so that we add our zeroes after the negative sign. 
+                if len(string) == 2: #single digit negative
+                    string = '-.0' + string[1]
+                elif len(string) == 3: #double digit negative
+                    string = '-' + '.' + string[1] + string[2]
+                else: # triple digit negative
+                    string = '-' + string[1] + '.' + string[2]
+            repeat = False
+            for i in string_list:
+                if string == i:
+                    repeat = True
+            if repeat == False:
+                string_list.append(string)
+                outlet.send_event(event_type = string)
+    else:
+        print('1: DIN1\n')
+        print('2: STRT\n')
+        print('3: BEGN\n')
+        print('4: FLSH\n')
+        print('5: STOP\n')
+        print('6: ESCP\n')
+        print('7: CRCT\n')
+        print('8: SPCE\n')
+        print('9: CLCK\n')
+        print('10: UCLK\n')
+        print('11: MVE0\n')
+        print('12: MVE1\n')
+        print('13: RESY\n')
+        print('14: OPN0\n')
+        print('15: OPN1\n')
+        print('16: OPN2\n')
+        print('17: OPN3\n')
+        print('18: CLS0\n')
+        print('19: CLS1\n')
+        print('20: CLS2\n')
+        print('21: CLS3\n')
+        
+        cnt = 22
+        # handle level/fixation tags
+        for i in range(1, 100):
+            if len(str(i)) == 1:
+                print(str(cnt) + ': FXX' + str(i) + '\n')
+            else:
+                print(str(cnt) + ': FX' + str(i) + '\n')
+            cnt = cnt + 1
+        
+        # handle miss tags
+        for i in range(1, 10):
+            for j in range(0, i):
+                print(str(cnt) + ': MS' + str(j) + str(i) + '\n')
+                cnt = cnt + 1
+        
+        # 175 tags so far, need 36 filler tags
+        for i in range(1,36):
+            if i < 10:
+                print(str(cnt) + ': TTT' + str(i) + '\n')
+            else:
+                print(str(cnt) + ': TT' + str(i) + '\n')
+            cnt = cnt + 1
+        
+        # handle d-prime scores (need to write a function for deciphering this)
+        for i in range(-301, 301):
+            string = str(i)
+            if i >= 0: # positive numbers and zero (appears to work)
+                if len(string) == 1: #single digit
+                    string = '0.0' + string
+                elif len(string) == 2: #double digit
+                    string = '0.'+ string
+                else: #triple digit
+                    string = string[0] + '.' + string[1] + string[2]            
+            else: # negative numbers (appears not to work. make this so that we add our zeroes after the negative sign. 
+                if len(string) == 2: #single digit negative
+                    string = '-.0' + string[1]
+                elif len(string) == 3: #double digit negative
+                    string = '-' + '.' + string[1] + string[2]
+                else: # triple digit negative
+                    string = '-' + string[1] + '.' + string[2]
+            repeat = False
+            for i in string_list:
+                if string == i:
+                    repeat = True
+            if repeat == False:
+                string_list.append(string)
+                print(str(cnt) + ': ' + string + '\n')
+            cnt = cnt + 1
+
+
+
+
+
+
+
+
+
+
+
 # rest screen for collecting alpha wave data before/after the experiment
-def rest_screen(outlet, num, audio_path):
+def rest_screen(outlet, num, audio_path, part_of_exp):
+    key_pressed = False
     win.fill(background_col)
     draw_boundaries()
-    multi_line_message("Please focus your eyes on the cross that will appear at the center of the screen.\n\n"\
-                       "Do your best to keep your eyes still and your jaw/other muscles relaxed.\n\n" \
-                        "Press F to begin this portion of the experiment whenever you are ready.", large_font, ((win_width - (win_width / 10)), 40))
-    wait_key()
+    msg_str = "Please focus your eyes on the cross that will appear at the center of the screen.\n\n"\
+                       "Do your best to keep your eyes still and your jaw/other muscles relaxed.\n\n" 
+    if part_of_exp == 'pre':
+        msg_str = msg_str + "Press F to begin this portion of the experiment whenever you are ready."
+    else:
+        msg_str = "Let your experimenter know that you have completed this portion of the experiment.\n\n"
+        msg_str = msg_str + "Your experimenter will direct you on how to proceed."
 
+    multi_line_message(msg_str, large_font, ((win_width - (win_width / 10)), 40))
+    while key_pressed == False:
+        for event in pg.event.get():
+            if event.type == pg.KEYDOWN:
+                if part_of_exp == 'pre':
+                    if event.key == pg.K_f:
+                        key_pressed = True
+                else:
+                    if event.key == pg.K_k:
+                        key_pressed = True
+    key_pressed = False
     # eyes open portion 
     eyes_open_start = pg.time.get_ticks()
     draw_square(outlet, "OPN" + str(num), [])
-    while (pg.time.get_ticks() - eyes_open_start <= 180000):
+    while (pg.time.get_ticks() - eyes_open_start <= 5000):#180000):
         win.fill(background_col)
         draw_boundaries()
         fixation_cross()
@@ -378,25 +570,30 @@ def rest_screen(outlet, num, audio_path):
     # eyes closed portion
     win.fill(background_col)
     draw_boundaries()
-    multi_line_message("Please close your eyes and do your best not to fall asleep. \n\n" \
+
+    msg_str = "Please close your eyes and do your best not to fall asleep. \n\n" \
                        "Do your best to keep your eyes still and your jaw/other muscles relaxed. \n\n" \
-                        "You will hear a noise when it is time for you to open your eyes. \n\n" \
-                       "Press F to begin this portion of the experiment whenever you are ready. ", large_font, ((win_width - (win_width / 10)), 40))
-    wait_key()
+                        "You will hear a noise when it is time for you to open your eyes. \n\n"
+    msg_str = msg_str + "Press J to begin this portion of the experiment whenever you are ready."
+
+    multi_line_message(msg_str, large_font, ((win_width - (win_width / 10)), 40))
+    while key_pressed == False:
+        for event in pg.event.get():
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_j:
+                    key_pressed = True
+
     eyes_closed_start = pg.time.get_ticks()
     draw_square(outlet, "CLS" + str(num), [])
-    while (pg.time.get_ticks() - eyes_closed_start <= 180000):
-        win.fill(background_col)
-        draw_boundaries()
-        fixation_cross()
+    while (pg.time.get_ticks() - eyes_closed_start <= 5000):#+180000):
+        win.fill(BLACK)
         if pg.time.get_ticks() - eyes_closed_start <= 100:
             draw_square2()
         pg.display.flip()
     eyes_closed_stop = pg.time.get_ticks()
     draw_square(outlet, "CLS" + str(num + 1), [])
     while (pg.time.get_ticks() - eyes_closed_stop < 100):
-        win.fill(background_col)
-        draw_boundaries()
+        win.fill(BLACK)
         draw_square2()
         pg.display.flip()
     pg.mixer.music.load(os.path.join(audio_path,'open_eyes.mp3'))
@@ -405,7 +602,6 @@ def rest_screen(outlet, num, audio_path):
     pg.time.delay(2000)
     pg.mixer.music.unload()
     return
-        
 
 # deprecated... turns out that we do not need it
 def consent_screens():
